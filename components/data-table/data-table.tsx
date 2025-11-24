@@ -1,3 +1,6 @@
+// components/data-table/data-table.tsx
+"use client";
+
 import { flexRender, type Table as TanstackTable } from "@tanstack/react-table";
 import type * as React from "react";
 
@@ -10,15 +13,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-// import { getCommonPinningStyles } from "@/components/data-table/data-table";
 import { cn } from "@/lib/utils";
 
+// 🔹 טייפ שהפילטרים של DiceUI משתמשים בו (data-table-faceted-filter.tsx)
+export type Option = {
+  label: string;
+  value: string;
+  count?: number;
+  icon?: React.ComponentType<{ className?: string }>;
+};
 
-export function getCommonPinningStyles(_arg: { column: unknown }) {
+// אם בעתיד תרצה להחזיר פינינג – אפשר למלא כאן לוגיקה אמיתית
+export function getCommonPinningStyles(): Record<string, unknown> {
   return {};
 }
-
-
 
 interface DataTableProps<TData> extends React.ComponentProps<"div"> {
   table: TanstackTable<TData>;
@@ -32,12 +40,17 @@ export function DataTable<TData>({
   className,
   ...props
 }: DataTableProps<TData>) {
+  // ✅ להשתמש בשורות המסוננות (כולל חיפוש / פילטרים)
+  const filteredRows = table.getFilteredRowModel().rows;
+  const hasRows = filteredRows?.length > 0;
+
   return (
     <div
       className={cn("flex w-full flex-col gap-2.5 overflow-auto", className)}
       {...props}
     >
       {children}
+
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
@@ -48,7 +61,7 @@ export function DataTable<TData>({
                     key={header.id}
                     colSpan={header.colSpan}
                     style={{
-                      ...getCommonPinningStyles({ column: header.column }),
+                      ...getCommonPinningStyles(),
                     }}
                   >
                     {header.isPlaceholder
@@ -62,9 +75,10 @@ export function DataTable<TData>({
               </TableRow>
             ))}
           </TableHeader>
+
           <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
+            {hasRows ? (
+              filteredRows.map((row) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
@@ -73,7 +87,7 @@ export function DataTable<TData>({
                     <TableCell
                       key={cell.id}
                       style={{
-                        ...getCommonPinningStyles({ column: cell.column }),
+                        ...getCommonPinningStyles(),
                       }}
                     >
                       {flexRender(
@@ -88,15 +102,16 @@ export function DataTable<TData>({
               <TableRow>
                 <TableCell
                   colSpan={table.getAllColumns().length}
-                  className="h-24 text-center"
+                  className="h-24 text-center text-sm text-muted-foreground"
                 >
-                  No results.
+                  אין תוצאות תואמות לסינון.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
+
       <div className="flex flex-col gap-2.5">
         <DataTablePagination table={table} />
         {actionBar &&
