@@ -1,7 +1,5 @@
-// prisma.config.ts
 import "dotenv/config";
 import { defineConfig, env } from "prisma/config";
-
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -10,6 +8,7 @@ export default defineConfig({
   },
   engine: "classic",
   datasource: {
-    url: env("DATABASE_URL"),
+    // 👇 כאן משתמשים ב־URL המיוחד של Prisma Postgres (prisma+postgres://)
+    url: env("DATABASE_PRISMA_DATABASE_URL"),
   },
 });
