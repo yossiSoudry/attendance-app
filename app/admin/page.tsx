@@ -1,8 +1,9 @@
 // app/admin/page.tsx
 import { prisma } from "@/lib/prisma";
+import type { Employee } from "@prisma/client";
 
 export default async function AdminPage() {
-  const employees = await prisma.employee.findMany({
+  const employees: Employee[] = await prisma.employee.findMany({
     orderBy: { createdAt: "desc" },
   });
 
@@ -49,7 +50,7 @@ export default async function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {employees.map((emp) => (
+                {employees.map((emp: Employee) => (
                   <tr
                     key={emp.id}
                     className="border-b border-slate-800/60 hover:bg-slate-800/60"
