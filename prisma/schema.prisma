@@ -6,9 +6,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // 👇 כאן משתמשים ב־URL הפשוט (postgres://) לטבלאות עצמן
-  url      = env("DATABASE_POSTGRES_URL")
 }
+
 
 
 enum EmployeeStatus {

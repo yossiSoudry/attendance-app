@@ -1,0 +1,186 @@
+// app/admin/_components/employees-data-table.tsx
+"use client";
+
+import * as React from "react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Text, CalendarIcon, DollarSign } from "lucide-react";
+
+import { DataTable } from "@/components/data-table/data-table";
+import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
+import { DataTableSortList } from "@/components/data-table/data-table-sort-list";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { useDataTable } from "@/hooks/use-data-table";
+
+export type EmployeeTableRow = {
+  id: string;
+  fullName: string;
+  nationalId: string;
+  status: "ACTIVE" | "BLOCKED";
+  baseHourlyRate: number | null;
+  createdAt: string; // ISO string מהשרת
+};
+
+export function EmployeesDataTable({ data }: { data: EmployeeTableRow[] }) {
+  const columns = React.useMemo<ColumnDef<EmployeeTableRow>[]>(
+    () => [
+      {
+        id: "fullName",
+        accessorKey: "fullName",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title="שם מלא"
+            label="שם מלא"
+          />
+        ),
+        cell: ({ row }) => <div>{row.getValue("fullName") as string}</div>,
+        meta: {
+          label: "שם מלא",
+          placeholder: "חיפוש לפי שם...",
+          variant: "text",
+          icon: Text,
+        },
+        enableColumnFilter: true,
+      },
+      {
+        id: "nationalId",
+        accessorKey: "nationalId",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title="תעודת זהות"
+            label="תעודת זהות"
+          />
+        ),
+        cell: ({ row }) => (
+          <div dir="ltr" className="tabular-nums">
+            {row.getValue("nationalId") as string}
+          </div>
+        ),
+        meta: {
+          label: "תעודת זהות",
+          placeholder: "חיפוש לפי ת.ז...",
+          variant: "text",
+          icon: Text,
+        },
+        enableColumnFilter: true,
+      },
+      {
+        id: "status",
+        accessorKey: "status",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title="סטטוס"
+            label="סטטוס"
+          />
+        ),
+        cell: ({ row }) => {
+          const status = row.getValue("status") as EmployeeTableRow["status"];
+          const isActive = status === "ACTIVE";
+
+          return (
+            <span
+              className={`inline-flex rounded-full px-2 py-0.5 text-[11px] ${
+                isActive
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30"
+                  : "bg-red-500/10 text-red-600 dark:text-red-300 border border-red-500/30"
+              }`}
+            >
+              {isActive ? "פעיל" : "חסום"}
+            </span>
+          );
+        },
+        meta: {
+          label: "סטטוס",
+          variant: "select",
+          options: [
+            { label: "פעיל", value: "ACTIVE" },
+            { label: "חסום", value: "BLOCKED" },
+          ],
+        },
+        enableColumnFilter: true,
+      },
+      {
+        id: "baseHourlyRate",
+        accessorKey: "baseHourlyRate",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title="שכר לשעה (₪)"
+            label="שכר לשעה"
+          />
+        ),
+        cell: ({ row }) => {
+          const value = row.getValue("baseHourlyRate") as number | null;
+          if (!value) return <span>-</span>;
+
+          return (
+            <div className="flex items-center gap-1 tabular-nums">
+              <DollarSign className="h-3 w-3 opacity-60" />
+              <span>{(value / 100).toFixed(2)}</span>
+            </div>
+          );
+        },
+        meta: {
+          label: "שכר לשעה",
+          variant: "number",
+          unit: "₪",
+          icon: DollarSign,
+        },
+        enableColumnFilter: false,
+      },
+      {
+        id: "createdAt",
+        accessorKey: "createdAt",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title="נוצר בתאריך"
+            label="נוצר בתאריך"
+          />
+        ),
+        cell: ({ row }) => {
+          const iso = row.getValue("createdAt") as string;
+          const date = new Date(iso);
+
+          return (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <CalendarIcon className="h-3 w-3 opacity-60" />
+              <span>{date.toLocaleDateString("he-IL")}</span>
+            </div>
+          );
+        },
+        meta: {
+          label: "תאריך יצירה",
+          variant: "date",
+          icon: CalendarIcon,
+        },
+        enableColumnFilter: false,
+      },
+    ],
+    []
+  );
+
+ const { table } = useDataTable({
+  data,
+  columns,
+  pageCount: 1,
+  initialState: {
+    sorting: [{ id: "createdAt", desc: true }],
+    pagination: {
+      pageIndex: 0, 
+      pageSize: 10,
+    },
+  },
+  getRowId: (row) => row.id,
+});
+
+  return (
+    <DataTable table={table}>
+      <DataTableToolbar table={table}>
+        <DataTableSortList table={table} />
+      </DataTableToolbar>
+    </DataTable>
+  );
+}
