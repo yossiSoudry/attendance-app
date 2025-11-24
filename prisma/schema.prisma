@@ -1,0 +1,275 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  BLOCKED
+}
+
+enum ShiftStatus {
+  OPEN
+  CLOSED
+  PENDING_APPROVAL
+  CORRECTED
+}
+
+enum TimeEventType {
+  CLOCK_IN
+  CLOCK_OUT
+  CORRECTION_IN
+  CORRECTION_OUT
+}
+
+enum ActorType {
+  EMPLOYEE
+  MANAGER
+  SYSTEM
+}
+
+enum CalendarEventType {
+  HOLIDAY
+  FAST
+  ROSH_CHODESH
+  MEMORIAL
+  CUSTOM
+}
+
+enum BonusType {
+  HOURLY
+  ONE_TIME
+}
+
+enum TaskStatus {
+  OPEN
+  COMPLETED
+  POSTPONED
+  CANCELED
+}
+
+enum Visibility {
+  EMPLOYER_ONLY
+  EMPLOYEE_CAN_SEE
+}
+
+enum UploadedBy {
+  EMPLOYEE
+  MANAGER
+}
+
+enum Platform {
+  ANDROID
+  IOS
+}
+
+model AdminUser {
+  id        String   @id @default(uuid()) @db.Uuid
+  username  String   @unique
+  password  String   // hashed password
+  role      String   @default("ADMIN")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Employee {
+  id              String              @id @default(uuid()) @db.Uuid
+  fullName        String
+  nationalId      String              @unique
+  status          EmployeeStatus      @default(ACTIVE)
+  baseHourlyRate  Int                 // stored in agorot
+  requireLocation Boolean             @default(false)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  workRates        EmployeeWorkRate[]
+  shifts           Shift[]
+  timeEvents       TimeEvent[]
+  bonuses          EmployeeBonus[]
+  tasks            Task[]
+  documentRequests DocumentRequest[]
+  documents        EmployeeDocument[]
+  devices          Device[]
+}
+
+model WorkType {
+  id          String             @id @default(uuid()) @db.Uuid
+  name        String
+  description String?
+  isDefault   Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  employeeRates EmployeeWorkRate[]
+  shifts        Shift[]
+}
+
+model EmployeeWorkRate {
+  id         String   @id @default(uuid()) @db.Uuid
+  employeeId String   @db.Uuid
+  workTypeId String   @db.Uuid
+  hourlyRate Int      // agorot
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  workType WorkType @relation(fields: [workTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, workTypeId])
+}
+
+model Shift {
+  id            String        @id @default(uuid()) @db.Uuid
+  employeeId    String        @db.Uuid
+  workTypeId    String?       @db.Uuid
+  startTime     DateTime
+  endTime       DateTime?
+  status        ShiftStatus   @default(OPEN)
+  source        String        @default("web") // "mobile" / "web" / "import"
+  isManual      Boolean       @default(false)
+  notesEmployee String?
+  notesManager  String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  workType   WorkType? @relation(fields: [workTypeId], references: [id])
+  timeEvents TimeEvent[]
+
+  @@index([employeeId, startTime])
+}
+
+model TimeEvent {
+  id         String        @id @default(uuid()) @db.Uuid
+  employeeId String        @db.Uuid
+  shiftId    String?       @db.Uuid
+  eventType  TimeEventType
+  createdBy  ActorType
+  time       DateTime
+  geoLat     Float?
+  geoLng     Float?
+  deviceId   String?       @db.Uuid
+  createdAt  DateTime      @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  shift    Shift?   @relation(fields: [shiftId], references: [id])
+  device   Device?  @relation(fields: [deviceId], references: [id])
+
+  @@index([employeeId, time])
+  @@index([shiftId])
+}
+
+model WorkRules {
+  id                        Int      @id @default(1)
+  dailyStandardHours        Float    @default(8)
+  weeklyStandardHours       Float    @default(42)
+  overtimeFirstRate         Float    @default(1.25)
+  overtimeFirstHoursPerDay  Float    @default(2)
+  overtimeSecondRate        Float    @default(1.5)
+  maxDailyHours             Float    @default(12)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+}
+
+model CalendarEvent {
+  id            String             @id @default(uuid()) @db.Uuid
+  gregorianDate DateTime
+  hebrewDate    String?
+  eventType     CalendarEventType
+  nameHe        String
+  nameEn        String?
+  isRestDay     Boolean            @default(false)
+  isShortDay    Boolean            @default(false)
+  createdAt     DateTime           @default(now())
+
+  @@unique([gregorianDate, eventType])
+  @@index([gregorianDate])
+}
+
+model EmployeeBonus {
+  id            String     @id @default(uuid()) @db.Uuid
+  employeeId    String     @db.Uuid
+  bonusType     BonusType
+  amountPerHour Int?
+  amountFixed   Int?
+  validFrom     DateTime?
+  validTo       DateTime?
+  description   String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+}
+
+model Task {
+  id                     String      @id @default(uuid()) @db.Uuid
+  employeeId             String      @db.Uuid
+  title                  String
+  description            String?
+  status                 TaskStatus  @default(OPEN)
+  createdBy              ActorType   @default(MANAGER)
+  dueDate                DateTime?
+  requiresDocumentUpload Boolean     @default(false)
+  employeeNote           String?
+  managerNote            String?
+  createdAt              DateTime    @default(now())
+  completedAt            DateTime?
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, status])
+}
+
+model DocumentRequest {
+  id                String          @id @default(uuid()) @db.Uuid
+  employeeId        String          @db.Uuid
+  title             String
+  description       String?
+  status            TaskStatus      @default(OPEN)
+  dueDate           DateTime?
+  createdAt         DateTime        @default(now())
+  completedAt       DateTime?
+  relatedDocumentId String?         @db.Uuid
+
+  employee        Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  relatedDocument EmployeeDocument? @relation(fields: [relatedDocumentId], references: [id])
+
+  @@index([employeeId, status])
+}
+
+model EmployeeDocument {
+  id         String           @id @default(uuid()) @db.Uuid
+  employeeId String           @db.Uuid
+  docType    String
+  fileUrl    String
+  visibility Visibility       @default(EMPLOYER_ONLY)
+  uploadedBy UploadedBy
+  createdAt  DateTime         @default(now())
+
+  employee Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  requests DocumentRequest[]
+
+  @@index([employeeId])
+}
+
+model Device {
+  id            String      @id @default(uuid()) @db.Uuid
+  employeeId    String      @db.Uuid
+  platform      Platform
+  expoPushToken String?
+  lastSeenAt    DateTime?
+  createdAt     DateTime    @default(now())
+
+  employee   Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  timeEvents TimeEvent[]
+
+  @@index([employeeId])
+}
