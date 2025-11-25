@@ -2,6 +2,8 @@
 import { prisma } from "@/lib/prisma";
 import { ShiftsDataTable, type ShiftTableRow } from "./_components/shifts-data-table";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ShiftsPage() {
   const shifts = await prisma.shift.findMany({
     include: {

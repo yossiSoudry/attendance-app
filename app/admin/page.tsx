@@ -6,6 +6,8 @@ import {
   type EmployeeTableRow,
 } from "./_components/employees-data-table";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminPage() {
   const employees: Employee[] = await prisma.employee.findMany({
     orderBy: { createdAt: "desc" },
