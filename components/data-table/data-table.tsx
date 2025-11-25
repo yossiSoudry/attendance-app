@@ -18,8 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 
 /**
- * טיפוסי עזר ש-DiceUI מצפה להם
- * (רק לטייפים, בלי לוגיקה בפועל – מספיק כדי שה-Hook יעבוד בלי שגיאות קומפילציה)
+ * ✅ טיפוסים ש-DiceUI וה-Hooks שלה מצפים לקבל
  */
 export type ExtendedColumnSort<TData> = {
   id: string;
@@ -33,7 +32,18 @@ export type QueryKeys = {
   filters?: string;
 };
 
-// DiceUI קוראים לזה עם column, אצלנו לא משתמשים בזה בפועל – מחזירים אובייקט ריק
+/**
+ * ✅ טיפוס Option שמשמש את DataTableFacetedFilter / Column Meta
+ *   options: [{ label, value, count?, icon? }]
+ */
+export type Option = {
+  label: string;
+  value: string;
+  count?: number;
+  icon?: React.ComponentType<{ className?: string }>;
+};
+
+// DiceUI קורא לזה עם { column }, אצלנו אין צורך בלוגיקה – מחזירים אובייקט ריק.
 export function getCommonPinningStyles(_: { column: unknown } = { column: null }) {
   return {};
 }
@@ -56,6 +66,7 @@ export function DataTable<TData>({
       {...props}
     >
       {children}
+
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
@@ -80,6 +91,7 @@ export function DataTable<TData>({
               </TableRow>
             ))}
           </TableHeader>
+
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
@@ -115,6 +127,7 @@ export function DataTable<TData>({
           </TableBody>
         </Table>
       </div>
+
       <div className="flex flex-col gap-2.5">
         <DataTablePagination table={table} />
         {actionBar &&
