@@ -3,7 +3,7 @@
 import {
   flexRender,
   type Table as TanstackTable,
-  type ColumnSort, // 👈 נוסיף את זה
+  type ColumnSort,
 } from "@tanstack/react-table";
 import type * as React from "react";
 
@@ -29,6 +29,7 @@ export type QueryKeys = {
   perPage: string;
   sort?: string;
   filters?: string;
+  joinOperator?: string; // 👈 מוסיפים את זה
 };
 
 /**
@@ -43,7 +44,9 @@ export type Option = {
 };
 
 // DiceUI קורא לזה עם { column }, אצלנו אין צורך בלוגיקה – מחזירים אובייקט ריק.
-export function getCommonPinningStyles(_: { column: unknown } = { column: null }) {
+export function getCommonPinningStyles(
+  _: { column: unknown } = { column: null },
+) {
   return {};
 }
 

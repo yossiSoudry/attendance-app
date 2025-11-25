@@ -11,13 +11,16 @@ import { DataTableSortList } from "@/components/data-table/data-table-sort-list"
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { useDataTable } from "@/hooks/use-data-table";
 
+import { EmployeeFormDialog } from "./employee-form-dialog";
+import { DeleteEmployeeDialog } from "./delete-employee-dialog";
+
 export type EmployeeTableRow = {
   id: string;
   fullName: string;
   nationalId: string;
   status: "ACTIVE" | "BLOCKED";
   baseHourlyRate: number | null;
-  createdAt: string; // ISO string מהשרת
+  createdAt: string;
 };
 
 export function EmployeesDataTable({ data }: { data: EmployeeTableRow[] }) {
@@ -27,11 +30,7 @@ export function EmployeesDataTable({ data }: { data: EmployeeTableRow[] }) {
         id: "fullName",
         accessorKey: "fullName",
         header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title="שם מלא"
-            label="שם מלא"
-          />
+          <DataTableColumnHeader column={column} title="שם מלא" label="שם מלא" />
         ),
         cell: ({ row }) => <div>{row.getValue("fullName") as string}</div>,
         meta: {
@@ -69,11 +68,7 @@ export function EmployeesDataTable({ data }: { data: EmployeeTableRow[] }) {
         id: "status",
         accessorKey: "status",
         header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title="סטטוס"
-            label="סטטוס"
-          />
+          <DataTableColumnHeader column={column} title="סטטוס" label="סטטוס" />
         ),
         cell: ({ row }) => {
           const status = row.getValue("status") as EmployeeTableRow["status"];
@@ -83,8 +78,8 @@ export function EmployeesDataTable({ data }: { data: EmployeeTableRow[] }) {
             <span
               className={`inline-flex rounded-full px-2 py-0.5 text-[11px] ${
                 isActive
-                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30"
-                  : "bg-red-500/10 text-red-600 dark:text-red-300 border border-red-500/30"
+                  ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"
+                  : "border border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-300"
               }`}
             >
               {isActive ? "פעיל" : "חסום"}
@@ -117,7 +112,7 @@ export function EmployeesDataTable({ data }: { data: EmployeeTableRow[] }) {
 
           return (
             <div className="flex items-center gap-1 tabular-nums">
-              <DollarSign className="h-3 w-3 opacity-60" />
+              <span className="text-xs opacity-60">₪</span>
               <span>{(value / 100).toFixed(2)}</span>
             </div>
           );
@@ -158,27 +153,47 @@ export function EmployeesDataTable({ data }: { data: EmployeeTableRow[] }) {
         },
         enableColumnFilter: false,
       },
+      {
+        id: "actions",
+        header: () => <span className="sr-only">פעולות</span>,
+        cell: ({ row }) => {
+          const employee = row.original;
+
+          return (
+            <div className="flex items-center justify-end gap-1">
+              <EmployeeFormDialog mode="edit" employee={employee} />
+              <DeleteEmployeeDialog
+                employeeId={employee.id}
+                employeeName={employee.fullName}
+              />
+            </div>
+          );
+        },
+        enableSorting: false,
+        enableHiding: false,
+      },
     ],
     []
   );
 
- const { table } = useDataTable({
-  data,
-  columns,
-  pageCount: 1,
-  initialState: {
-    sorting: [{ id: "createdAt", desc: true }],
-    pagination: {
-      pageIndex: 0, 
-      pageSize: 10,
+  const { table } = useDataTable({
+    data,
+    columns,
+    pageCount: 1,
+    initialState: {
+      sorting: [{ id: "createdAt", desc: true }],
+      pagination: {
+        pageIndex: 0,
+        pageSize: 10,
+      },
     },
-  },
-  getRowId: (row) => row.id,
-});
+    getRowId: (row) => row.id,
+  });
 
   return (
     <DataTable table={table}>
       <DataTableToolbar table={table}>
+        <EmployeeFormDialog mode="create" />
         <DataTableSortList table={table} />
       </DataTableToolbar>
     </DataTable>
