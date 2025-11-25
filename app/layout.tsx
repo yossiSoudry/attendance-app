@@ -18,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="he" dir="rtl" suppressHydrationWarning>
-      <body>
+      <body suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -37,7 +37,7 @@ export default function RootLayout({
 
                 {/* בינתיים: עטיפה בסיסית ונקייה */}
 
-                <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-10 sm:px-6 lg:px-10">
+                <main className="mx-auto flex min-h-screen w-full container flex-col px-4 py-10 sm:px-6 lg:px-10">
                   <div className="mb-6 flex justify-end">
                     <ModeToggle />
                   </div>

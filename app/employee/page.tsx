@@ -1,8 +1,10 @@
 // app/employee/page.tsx
 import { prisma } from "@/lib/prisma";
+import { ActorType, ShiftStatus, TimeEventType } from "@prisma/client";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { ActorType, ShiftStatus, TimeEventType } from "@prisma/client";
+
+export const dynamic = "force-dynamic";
 
 export default async function EmployeeHomePage() {
   const cookieStore = await cookies();
@@ -218,10 +220,12 @@ export default async function EmployeeHomePage() {
               {lastShiftSummary}
             </p>
           )}
-          <p>
-            בהמשך נוסיף כאן כפתורים להיסטוריית משמרות, משימות, העלאת מסמכים
-            ועוד.
-          </p>
+          <a
+            href="/employee/history"
+            className="inline-flex items-center gap-1 text-primary hover:underline"
+          >
+            צפה בהיסטוריית משמרות
+          </a>
         </div>
       </section>
     </div>

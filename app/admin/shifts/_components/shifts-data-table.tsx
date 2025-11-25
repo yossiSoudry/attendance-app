@@ -1,16 +1,17 @@
 // app/admin/shifts/_components/shifts-data-table.tsx
 "use client";
 
-import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { User, Clock, CalendarIcon } from "lucide-react";
+import { CalendarIcon, Clock, User } from "lucide-react";
+import * as React from "react";
 
 import { DataTable } from "@/components/data-table/data-table";
-import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
-import { DataTableSortList } from "@/components/data-table/data-table-sort-list";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { DataTableSortList } from "@/components/data-table/data-table-sort-list";
+import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { useDataTable } from "@/hooks/use-data-table";
 import type { ShiftStatus } from "@prisma/client";
+import { ExportShiftsButton } from "./export-shifts-button";
 
 export type ShiftTableRow = {
   id: string;
@@ -63,9 +64,12 @@ const statusLabels: Record<ShiftStatus, string> = {
 
 const statusColors: Record<ShiftStatus, string> = {
   OPEN: "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-300",
-  CLOSED: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
-  PENDING_APPROVAL: "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-300",
-  CORRECTED: "border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-300",
+  CLOSED:
+    "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
+  PENDING_APPROVAL:
+    "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-300",
+  CORRECTED:
+    "border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-300",
   REJECTED: "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-300",
 };
 
@@ -117,10 +121,14 @@ export function ShiftsDataTable({ data, employees }: ShiftsDataTableProps) {
         cell: ({ row }) => {
           const { startTime, endTime } = row.original;
           return (
-            <div className="flex items-center gap-1 tabular-nums text-sm" dir="ltr">
+            <div
+              className="flex items-center gap-1 tabular-nums text-sm"
+              dir="ltr"
+            >
               <Clock className="h-3 w-3 opacity-60" />
               <span>
-                {formatTime(startTime)} - {endTime ? formatTime(endTime) : "..."}
+                {formatTime(startTime)} -{" "}
+                {endTime ? formatTime(endTime) : "..."}
               </span>
             </div>
           );
@@ -226,6 +234,7 @@ export function ShiftsDataTable({ data, employees }: ShiftsDataTableProps) {
   return (
     <DataTable table={table}>
       <DataTableToolbar table={table}>
+        <ExportShiftsButton />
         <DataTableSortList table={table} />
       </DataTableToolbar>
     </DataTable>
