@@ -68,7 +68,7 @@ export default async function EmployeeLoginPage({ searchParams }: PageProps) {
               </div>
             )}
 
-            <form className="space-y-4" action="/employee/login" method="post">
+            <form className="space-y-4" action="/employee/auth" method="post">
               <div className="space-y-2">
                 <label
                   htmlFor="nationalId"
