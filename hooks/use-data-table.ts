@@ -156,24 +156,25 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
     );
   }, [columns]);
 
-  const [sorting, setSorting] = useQueryState(
-    sortKey,
-    getSortingStateParser<TData>(columnIds)
-      .withOptions(queryStateOptions)
-      .withDefault(initialState?.sorting ?? []),
-  );
+ const [sorting, setSorting] = useQueryState(
+  sortKey,
+  getSortingStateParser<TData>(columnIds)
+    .withOptions(queryStateOptions)
+    .withDefault(initialState?.sorting ?? []),
+);
 
-  const onSortingChange = React.useCallback(
-    (updaterOrValue: Updater<SortingState>) => {
-      if (typeof updaterOrValue === "function") {
-        const newSorting = updaterOrValue(sorting);
-        setSorting(newSorting as ExtendedColumnSort<TData>[]);
-      } else {
-        setSorting(updaterOrValue as ExtendedColumnSort<TData>[]);
-      }
-    },
-    [sorting, setSorting],
-  );
+
+const onSortingChange = React.useCallback(
+  (updaterOrValue: Updater<SortingState>) => {
+    if (typeof updaterOrValue === "function") {
+      const newSorting = updaterOrValue(sorting);
+      void setSorting(newSorting as ExtendedColumnSort<TData>[]);
+    } else {
+      void setSorting(updaterOrValue as ExtendedColumnSort<TData>[]);
+    }
+  },
+  [sorting, setSorting],
+);
 
   const filterableColumns = React.useMemo(() => {
     if (enableAdvancedFilter) return [];
