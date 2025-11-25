@@ -119,7 +119,7 @@ export function EmployeeFormDialog({
 
   const defaultTrigger =
     mode === "create" ? (
-      <Button>
+      <Button className="h-8">
         <Plus className="ml-2 h-4 w-4" />
         עובד חדש
       </Button>

@@ -1,8 +1,11 @@
 // app/admin/shifts/page.tsx
 import { prisma } from "@/lib/prisma";
-import { ShiftsDataTable, type ShiftTableRow } from "./_components/shifts-data-table";
+import {
+  ShiftsDataTable,
+  type ShiftTableRow,
+} from "./_components/shifts-data-table";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function ShiftsPage() {
   const shifts = await prisma.shift.findMany({
@@ -27,18 +30,25 @@ export default async function ShiftsPage() {
     id: shift.id,
     employeeId: shift.employee.id,
     employeeName: shift.employee.fullName,
+    workTypeId: shift.workType?.id ?? null,
     workTypeName: shift.workType?.name ?? null,
     startTime: shift.startTime.toISOString(),
     endTime: shift.endTime?.toISOString() ?? null,
     status: shift.status,
     source: shift.source,
     isRetro: shift.isRetro,
+    notesManager: shift.notesManager,
   }));
 
   // רשימת עובדים לפילטר
   const employees = await prisma.employee.findMany({
     select: { id: true, fullName: true },
     orderBy: { fullName: "asc" },
+  });
+
+  const workTypes = await prisma.workType.findMany({
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
   });
 
   return (
@@ -56,6 +66,7 @@ export default async function ShiftsPage() {
         <ShiftsDataTable
           data={rows}
           employees={employees.map((e) => ({ label: e.fullName, value: e.id }))}
+          workTypes={workTypes.map((wt) => ({ label: wt.name, value: wt.id }))}
         />
       </section>
     </div>

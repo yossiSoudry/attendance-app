@@ -11,23 +11,28 @@ import { DataTableSortList } from "@/components/data-table/data-table-sort-list"
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { useDataTable } from "@/hooks/use-data-table";
 import type { ShiftStatus } from "@prisma/client";
+import { DeleteShiftDialog } from "./delete-shift-dialog";
 import { ExportShiftsButton } from "./export-shifts-button";
+import { ShiftFormDialog } from "./shift-form-dialog";
 
 export type ShiftTableRow = {
   id: string;
   employeeId: string;
   employeeName: string;
+  workTypeId: string | null;
   workTypeName: string | null;
   startTime: string;
   endTime: string | null;
   status: ShiftStatus;
   source: string;
   isRetro: boolean;
+  notesManager: string | null;
 };
 
 type ShiftsDataTableProps = {
   data: ShiftTableRow[];
   employees: { label: string; value: string }[];
+  workTypes?: { label: string; value: string }[];
 };
 
 function formatDuration(startIso: string, endIso: string | null): string {
@@ -73,7 +78,11 @@ const statusColors: Record<ShiftStatus, string> = {
   REJECTED: "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-300",
 };
 
-export function ShiftsDataTable({ data, employees }: ShiftsDataTableProps) {
+export function ShiftsDataTable({
+  data,
+  employees,
+  workTypes = [],
+}: ShiftsDataTableProps) {
   const columns = React.useMemo<ColumnDef<ShiftTableRow>[]>(
     () => [
       {
@@ -213,8 +222,40 @@ export function ShiftsDataTable({ data, employees }: ShiftsDataTableProps) {
         },
         enableColumnFilter: false,
       },
+      {
+        id: "actions",
+        header: () => <span className="sr-only">פעולות</span>,
+        cell: ({ row }) => {
+          const shift = row.original;
+
+          return (
+            <div className="flex items-center justify-end gap-1">
+              <ShiftFormDialog
+                mode="edit"
+                shift={{
+                  id: shift.id,
+                  employeeId: shift.employeeId,
+                  workTypeId: null, // נצטרך להוסיף זאת ל-ShiftTableRow
+                  startTime: shift.startTime,
+                  endTime: shift.endTime,
+                  notesManager: null,
+                }}
+                employees={employees}
+                workTypes={workTypes}
+              />
+              <DeleteShiftDialog
+                shiftId={shift.id}
+                employeeName={shift.employeeName}
+                shiftDate={formatDate(shift.startTime)}
+              />
+            </div>
+          );
+        },
+        enableSorting: false,
+        enableHiding: false,
+      },
     ],
-    [employees]
+    [employees, workTypes]
   );
 
   const { table } = useDataTable({
@@ -234,6 +275,11 @@ export function ShiftsDataTable({ data, employees }: ShiftsDataTableProps) {
   return (
     <DataTable table={table}>
       <DataTableToolbar table={table}>
+        <ShiftFormDialog
+          mode="create"
+          employees={employees}
+          workTypes={workTypes}
+        />
         <ExportShiftsButton />
         <DataTableSortList table={table} />
       </DataTableToolbar>

@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
  * ✅ טיפוסים ש-DiceUI וה-Hooks שלה מצפים לקבל
  * כאן אנחנו פשוט עוטפים את ColumnSort המקורי של TanStack
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export type ExtendedColumnSort<TData> = ColumnSort;
 
 export type QueryKeys = {
@@ -45,6 +46,7 @@ export type Option = {
 
 // DiceUI קורא לזה עם { column }, אצלנו אין צורך בלוגיקה – מחזירים אובייקט ריק.
 export function getCommonPinningStyles(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _: { column: unknown } = { column: null },
 ) {
   return {};

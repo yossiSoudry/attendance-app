@@ -50,7 +50,7 @@ export function ExportShiftsButton() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" disabled={isPending}>
+        <Button className="h-8" variant="outline" disabled={isPending}>
           {isPending ? (
             <Loader2 className="ml-2 h-4 w-4 animate-spin" />
           ) : (
