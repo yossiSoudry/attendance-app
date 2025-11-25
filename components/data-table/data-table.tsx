@@ -3,6 +3,7 @@
 import {
   flexRender,
   type Table as TanstackTable,
+  type ColumnSort, // 👈 נוסיף את זה
 } from "@tanstack/react-table";
 import type * as React from "react";
 
@@ -19,11 +20,9 @@ import { cn } from "@/lib/utils";
 
 /**
  * ✅ טיפוסים ש-DiceUI וה-Hooks שלה מצפים לקבל
+ * כאן אנחנו פשוט עוטפים את ColumnSort המקורי של TanStack
  */
-export type ExtendedColumnSort<TData> = {
-  id: string;
-  desc?: boolean;
-};
+export type ExtendedColumnSort<TData> = ColumnSort;
 
 export type QueryKeys = {
   page: string;

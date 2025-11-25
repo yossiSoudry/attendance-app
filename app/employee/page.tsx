@@ -17,7 +17,6 @@ export default async function EmployeeHomePage() {
   });
 
   if (!employee) {
-    // אם העוגייה לא תקפה – ננקה ונחזיר להתחברות
     cookieStore.set("employeeId", "", { maxAge: 0, path: "/" });
     redirect("/employee/login");
   }
@@ -167,12 +166,12 @@ export default async function EmployeeHomePage() {
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6">
-      <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-xl shadow-slate-950/40">
-        <p className="text-xs text-slate-400">שלום,</p>
-        <h1 className="mt-1 text-xl font-semibold text-slate-50">
+      <section className="rounded-3xl border border-border bg-card p-6 shadow-xl">
+        <p className="text-xs text-muted-foreground">שלום,</p>
+        <h1 className="mt-1 text-xl font-semibold text-foreground">
           {employee.fullName}
         </h1>
-        <p className="mt-2 text-sm text-slate-300">
+        <p className="mt-2 text-sm text-muted-foreground">
           כאן אתה יכול לדווח על כניסה ויציאה מהמשמרת, ולראות מידע עדכני על
           הסטטוס שלך.
         </p>
@@ -180,17 +179,17 @@ export default async function EmployeeHomePage() {
         <div className="mt-5 flex items-center gap-3">
           <div className="relative flex h-3 w-3">
             <span
-              className={`absolute inline-flex h-full w-full rounded-full ${
-                inShift ? "bg-emerald-500" : "bg-slate-500"
-              } opacity-40 animate-ping`}
+              className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-40 ${
+                inShift ? "bg-emerald-500" : "bg-muted-foreground"
+              }`}
             />
             <span
               className={`relative inline-flex h-3 w-3 rounded-full ${
-                inShift ? "bg-emerald-400" : "bg-slate-400"
+                inShift ? "bg-emerald-400" : "bg-muted-foreground"
               }`}
             />
           </div>
-          <span className="text-xs text-slate-300">
+          <span className="text-xs text-muted-foreground">
             {inShift
               ? startedAt
                 ? `אתה כעת במשמרת, מאז ${startedAt}`
@@ -200,20 +199,20 @@ export default async function EmployeeHomePage() {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-slate-950/40">
+      <section className="rounded-3xl border border-border bg-card p-4 shadow-lg">
         <form action={inShift ? clockOut : clockIn}>
           <button
             type="submit"
-            className="flex w-full items-center justify-center rounded-2xl bg-gradient-to-l from-violet-600 via-fuchsia-500 to-sky-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-700/40 transition hover:brightness-110 hover:shadow-xl"
+            className="flex w-full items-center justify-center rounded-2xl bg-linear-to-l from-violet-600 via-fuchsia-500 to-sky-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-700/40 transition hover:brightness-110 hover:shadow-xl"
           >
             {inShift ? "יציאה מהמשמרת" : "כניסה למשמרת"}
           </button>
         </form>
 
-        <div className="mt-4 space-y-2 text-xs text-slate-400">
+        <div className="mt-4 space-y-2 text-xs text-muted-foreground">
           {lastShiftSummary && (
             <p>
-              <span className="font-medium text-slate-300">
+              <span className="font-medium text-foreground">
                 המשמרת האחרונה:
               </span>{" "}
               {lastShiftSummary}

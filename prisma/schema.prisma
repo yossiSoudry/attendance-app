@@ -6,6 +6,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_PRISMA_DATABASE_URL")
 }
 
 
@@ -20,6 +21,7 @@ enum ShiftStatus {
   CLOSED
   PENDING_APPROVAL
   CORRECTED
+  REJECTED
 }
 
 enum TimeEventType {
@@ -136,6 +138,9 @@ model Shift {
   isManual      Boolean       @default(false)
   notesEmployee String?
   notesManager  String?
+  isRetro       Boolean       @default(false)
+  approvedById  String?       @db.Uuid
+  approvedAt    DateTime?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -273,4 +278,20 @@ model Device {
   timeEvents TimeEvent[]
 
   @@index([employeeId])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  actorId   String?  @db.Uuid
+  actorType ActorType
+  entity    String   // "SHIFT" / "EMPLOYEE" / "BONUS" / etc.
+  entityId  String   @db.Uuid
+  action    String   // "CREATE" / "UPDATE" / "DELETE"
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([actorId])
+  @@index([createdAt])
 }
