@@ -1,7 +1,9 @@
-// components/data-table/data-table.tsx
 "use client";
 
-import { flexRender, type Table as TanstackTable } from "@tanstack/react-table";
+import {
+  flexRender,
+  type Table as TanstackTable,
+} from "@tanstack/react-table";
 import type * as React from "react";
 
 import { DataTablePagination } from "@/components/data-table/data-table-pagination";
@@ -15,16 +17,24 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
-// 🔹 טייפ שהפילטרים של DiceUI משתמשים בו (data-table-faceted-filter.tsx)
-export type Option = {
-  label: string;
-  value: string;
-  count?: number;
-  icon?: React.ComponentType<{ className?: string }>;
+/**
+ * טיפוסי עזר ש-DiceUI מצפה להם
+ * (רק לטייפים, בלי לוגיקה בפועל – מספיק כדי שה-Hook יעבוד בלי שגיאות קומפילציה)
+ */
+export type ExtendedColumnSort<TData> = {
+  id: string;
+  desc?: boolean;
 };
 
-// אם בעתיד תרצה להחזיר פינינג – אפשר למלא כאן לוגיקה אמיתית
-export function getCommonPinningStyles(): Record<string, unknown> {
+export type QueryKeys = {
+  page: string;
+  perPage: string;
+  sort?: string;
+  filters?: string;
+};
+
+// DiceUI קוראים לזה עם column, אצלנו לא משתמשים בזה בפועל – מחזירים אובייקט ריק
+export function getCommonPinningStyles(_: { column: unknown } = { column: null }) {
   return {};
 }
 
@@ -40,17 +50,12 @@ export function DataTable<TData>({
   className,
   ...props
 }: DataTableProps<TData>) {
-  // ✅ להשתמש בשורות המסוננות (כולל חיפוש / פילטרים)
-  const filteredRows = table.getFilteredRowModel().rows;
-  const hasRows = filteredRows?.length > 0;
-
   return (
     <div
       className={cn("flex w-full flex-col gap-2.5 overflow-auto", className)}
       {...props}
     >
       {children}
-
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
@@ -61,7 +66,7 @@ export function DataTable<TData>({
                     key={header.id}
                     colSpan={header.colSpan}
                     style={{
-                      ...getCommonPinningStyles(),
+                      ...getCommonPinningStyles({ column: header.column }),
                     }}
                   >
                     {header.isPlaceholder
@@ -75,10 +80,9 @@ export function DataTable<TData>({
               </TableRow>
             ))}
           </TableHeader>
-
           <TableBody>
-            {hasRows ? (
-              filteredRows.map((row) => (
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
@@ -87,7 +91,7 @@ export function DataTable<TData>({
                     <TableCell
                       key={cell.id}
                       style={{
-                        ...getCommonPinningStyles(),
+                        ...getCommonPinningStyles({ column: cell.column }),
                       }}
                     >
                       {flexRender(
@@ -102,16 +106,15 @@ export function DataTable<TData>({
               <TableRow>
                 <TableCell
                   colSpan={table.getAllColumns().length}
-                  className="h-24 text-center text-sm text-muted-foreground"
+                  className="h-24 text-center"
                 >
-                  אין תוצאות תואמות לסינון.
+                  אין נתונים להצגה.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
-
       <div className="flex flex-col gap-2.5">
         <DataTablePagination table={table} />
         {actionBar &&
