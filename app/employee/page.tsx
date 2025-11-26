@@ -1,6 +1,9 @@
 // app/employee/page.tsx
+import { ShiftDurationWidget } from "@/components/shift-duration-widget";
+import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { ActorType, ShiftStatus, TimeEventType } from "@prisma/client";
+import { History } from "lucide-react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -155,20 +158,69 @@ export default async function EmployeeHomePage() {
       minute: "2-digit",
     });
 
+  function formatLastShift(shift: { startTime: Date; endTime: Date }) {
+    const now = new Date();
+    const shiftDate = new Date(shift.startTime);
+
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    const shiftDay = new Date(
+      shiftDate.getFullYear(),
+      shiftDate.getMonth(),
+      shiftDate.getDate()
+    );
+
+    const timeRange = `${shift.startTime.toLocaleTimeString("he-IL", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })} – ${shift.endTime.toLocaleTimeString("he-IL", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
+
+    if (shiftDay.getTime() === today.getTime()) {
+      return `היום, ${timeRange}`;
+    }
+
+    if (shiftDay.getTime() === yesterday.getTime()) {
+      return `אתמול, ${timeRange}`;
+    }
+
+    if (shiftDay >= weekAgo) {
+      const dayName = shiftDate.toLocaleDateString("he-IL", {
+        weekday: "long",
+      });
+      const date = shiftDate.toLocaleDateString("he-IL", {
+        day: "numeric",
+        month: "numeric",
+      });
+      return `${dayName} ${date}, ${timeRange}`;
+    }
+
+    const date = shiftDate.toLocaleDateString("he-IL", {
+      day: "numeric",
+      month: "numeric",
+      year: "numeric",
+    });
+    return `${date}, ${timeRange}`;
+  }
+
   const lastShiftSummary =
     lastClosedShift && lastClosedShift.startTime && lastClosedShift.endTime
-      ? `${lastClosedShift.startTime.toLocaleTimeString("he-IL", {
-          hour: "2-digit",
-          minute: "2-digit",
-        })} – ${lastClosedShift.endTime.toLocaleTimeString("he-IL", {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}`
+      ? formatLastShift({
+          startTime: lastClosedShift.startTime,
+          endTime: lastClosedShift.endTime,
+        })
       : null;
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-6">
-      <section className="rounded-3xl border border-border bg-card p-6 shadow-xl">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+      {/* כרטיסיה עליונה - רוחב מלא */}
+      <section className="rounded-3xl border-2 bg-card p-6 shadow-md dark:shadow-secondary/50">
         <p className="text-xs text-muted-foreground">שלום,</p>
         <h1 className="mt-1 text-xl font-semibold text-foreground">
           {employee.fullName}
@@ -201,33 +253,33 @@ export default async function EmployeeHomePage() {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-border bg-card p-4 shadow-lg">
-        <form action={inShift ? clockOut : clockIn}>
-          <button
-            type="submit"
-            className="flex w-full items-center justify-center rounded-2xl bg-linear-to-l from-violet-600 via-fuchsia-500 to-sky-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-700/40 transition hover:brightness-110 hover:shadow-xl"
-          >
-            {inShift ? "יציאה מהמשמרת" : "כניסה למשמרת"}
-          </button>
-        </form>
+      {/* גריד - ווידג'ט + כרטיסיית היסטוריה */}
+      <div className="flex flex-col gap-6 sm:flex-row">
+        <ShiftDurationWidget
+          startTime={openShift?.startTime}
+          action={inShift ? clockOut : clockIn}
+          inShift={inShift}
+        />
 
-        <div className="mt-4 space-y-2 text-xs text-muted-foreground">
-          {lastShiftSummary && (
-            <p>
-              <span className="font-medium text-foreground">
-                המשמרת האחרונה:
-              </span>{" "}
-              {lastShiftSummary}
-            </p>
-          )}
-          <a
-            href="/employee/history"
-            className="inline-flex items-center gap-1 text-primary hover:underline"
-          >
-            צפה בהיסטוריית משמרות
-          </a>
-        </div>
-      </section>
+        <section className="flex flex-1 flex-col justify-center rounded-3xl border-2 bg-card p-6 shadow-md dark:shadow-secondary/50">
+          <div className="space-y-3 text-sm text-muted-foreground">
+            {lastShiftSummary && (
+              <p>
+                <span className="font-medium text-foreground">
+                  המשמרת האחרונה:
+                </span>{" "}
+                {lastShiftSummary}
+              </p>
+            )}
+            <Button variant="outline" asChild>
+              <a href="/employee/history" className="gap-2">
+                <History className="h-4 w-4" />
+                היסטוריית משמרות
+              </a>
+            </Button>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

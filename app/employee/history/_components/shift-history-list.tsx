@@ -135,7 +135,7 @@ export function ShiftHistoryList({ shifts }: ShiftHistoryListProps) {
         <AccordionItem
           key={day.date}
           value={day.date}
-          className="rounded-2xl border border-border bg-card shadow-sm"
+          className="border-2 whitespace-nowrap dark:shadow-secondary/50 bg-card shadow-sm rounded-2xl"
         >
           <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
             <div className="flex w-full items-center justify-between pr-2">

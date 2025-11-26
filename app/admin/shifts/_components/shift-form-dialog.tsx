@@ -144,9 +144,9 @@ export function ShiftFormDialog({
 
   const defaultTrigger =
     mode === "create" ? (
-      <Button>
+      <Button variant="gradient">
         <Plus className="ml-2 h-4 w-4" />
-        משמרת חדשה
+        צור משמרת
       </Button>
     ) : (
       <Button variant="ghost" size="icon">
@@ -156,7 +156,9 @@ export function ShiftFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="h-8" asChild>{trigger ?? defaultTrigger}</DialogTrigger>
+      <DialogTrigger className="h-8" asChild>
+        {trigger ?? defaultTrigger}
+      </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
