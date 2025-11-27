@@ -14,6 +14,7 @@ import type { ShiftStatus } from "@prisma/client";
 import { DeleteShiftDialog } from "./delete-shift-dialog";
 import { ExportShiftsButton } from "./export-shifts-button";
 import { ShiftFormDialog } from "./shift-form-dialog";
+import { ShiftPayrollDialog } from "./shift-payroll-dialog";
 
 export type ShiftTableRow = {
   id: string;
@@ -230,15 +231,21 @@ export function ShiftsDataTable({
 
           return (
             <div className="flex items-center justify-end gap-1">
+              {shift.status === "CLOSED" && (
+                <ShiftPayrollDialog
+                  shiftId={shift.id}
+                  employeeName={shift.employeeName}
+                />
+              )}
               <ShiftFormDialog
                 mode="edit"
                 shift={{
                   id: shift.id,
                   employeeId: shift.employeeId,
-                  workTypeId: null, // נצטרך להוסיף זאת ל-ShiftTableRow
+                  workTypeId: shift.workTypeId,
                   startTime: shift.startTime,
                   endTime: shift.endTime,
-                  notesManager: null,
+                  notesManager: shift.notesManager,
                 }}
                 employees={employees}
                 workTypes={workTypes}

@@ -1,13 +1,15 @@
 // app/admin/page.tsx
+import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import type { Employee } from "@prisma/client";
-import Link from "next/link";
 import { Briefcase, Clock, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { getPendingShiftsCount } from "./_actions/approval-actions";
 import {
   EmployeesDataTable,
   type EmployeeTableRow,
 } from "./_components/employees-data-table";
+import { PendingShiftsDialog } from "./_components/pending-shifts-dialog";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +22,11 @@ export default async function AdminPage() {
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });
+
+  const pendingCount = await getPendingShiftsCount();
+
+  // TODO: החלף ב-ID מהסשן שלך
+  const managerId = "00000000-0000-0000-0000-000000000001";
 
   const rows: EmployeeTableRow[] = employees.map((emp) => ({
     id: emp.id,
@@ -61,6 +68,11 @@ export default async function AdminPage() {
               סוגי עבודה
             </Link>
           </Button>
+          <PendingShiftsDialog
+            managerId={managerId}
+            initialCount={pendingCount}
+            workTypes={workTypes}
+          />
         </div>
       </section>
 
