@@ -2,10 +2,12 @@
 import { ShiftDurationWidget } from "@/components/shift-duration-widget";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
-import { ActorType, ShiftStatus, TimeEventType } from "@prisma/client";
+import { ShiftStatus } from "@prisma/client";
 import { History } from "lucide-react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { ClockInButton } from "./_components/clock-in-button";
+import { ClockOutButton } from "./_components/clock-out-button";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +34,11 @@ export default async function EmployeeHomePage() {
       status: ShiftStatus.OPEN,
     },
     orderBy: { startTime: "desc" },
+    include: {
+      workType: {
+        select: { name: true },
+      },
+    },
   });
 
   const lastClosedShift = await prisma.shift.findFirst({
@@ -42,113 +49,16 @@ export default async function EmployeeHomePage() {
     orderBy: { endTime: "desc" },
   });
 
-  async function clockIn() {
-    "use server";
-
-    const cookieStore = await cookies();
-    const employeeId = cookieStore.get("employeeId")?.value;
-
-    if (!employeeId) {
-      redirect("/employee/login");
-    }
-
-    const employee = await prisma.employee.findUnique({
-      where: { id: employeeId },
-    });
-
-    if (!employee) {
-      cookieStore.set("employeeId", "", { maxAge: 0, path: "/" });
-      redirect("/employee/login");
-    }
-
-    const existingOpen = await prisma.shift.findFirst({
-      where: {
-        employeeId: employee.id,
-        status: ShiftStatus.OPEN,
-      },
-    });
-
-    if (existingOpen) {
-      redirect("/employee");
-    }
-
-    const now = new Date();
-
-    const shift = await prisma.shift.create({
-      data: {
-        employeeId: employee.id,
-        status: ShiftStatus.OPEN,
-        startTime: now,
-        source: "web",
-      },
-    });
-
-    await prisma.timeEvent.create({
-      data: {
-        employeeId: employee.id,
-        shiftId: shift.id,
-        eventType: TimeEventType.CLOCK_IN,
-        createdBy: ActorType.EMPLOYEE,
-        time: now,
-      },
-    });
-
-    redirect("/employee");
-  }
-
-  async function clockOut() {
-    "use server";
-
-    const cookieStore = await cookies();
-    const employeeId = cookieStore.get("employeeId")?.value;
-
-    if (!employeeId) {
-      redirect("/employee/login");
-    }
-
-    const employee = await prisma.employee.findUnique({
-      where: { id: employeeId },
-    });
-
-    if (!employee) {
-      cookieStore.set("employeeId", "", { maxAge: 0, path: "/" });
-      redirect("/employee/login");
-    }
-
-    const openShift = await prisma.shift.findFirst({
-      where: {
-        employeeId: employee.id,
-        status: ShiftStatus.OPEN,
-      },
-      orderBy: { startTime: "desc" },
-    });
-
-    if (!openShift) {
-      redirect("/employee");
-    }
-
-    const now = new Date();
-
-    await prisma.shift.update({
-      where: { id: openShift.id },
-      data: {
-        endTime: now,
-        status: ShiftStatus.CLOSED,
-      },
-    });
-
-    await prisma.timeEvent.create({
-      data: {
-        employeeId: employee.id,
-        shiftId: openShift.id,
-        eventType: TimeEventType.CLOCK_OUT,
-        createdBy: ActorType.EMPLOYEE,
-        time: now,
-      },
-    });
-
-    redirect("/employee");
-  }
+  // Fetch work types for clock-in selection
+  const workTypes = await prisma.workType.findMany({
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      isDefault: true,
+    },
+    orderBy: [{ isDefault: "desc" }, { name: "asc" }],
+  });
 
   const inShift = Boolean(openShift);
   const startedAt =
@@ -246,7 +156,9 @@ export default async function EmployeeHomePage() {
           <span className="text-xs text-muted-foreground">
             {inShift
               ? startedAt
-                ? `אתה כעת במשמרת, מאז ${startedAt}`
+                ? `אתה כעת במשמרת, מאז ${startedAt}${
+                    openShift?.workType ? ` (${openShift.workType.name})` : ""
+                  }`
                 : "אתה כעת במשמרת"
               : "אינך במשמרת כרגע"}
           </span>
@@ -255,11 +167,13 @@ export default async function EmployeeHomePage() {
 
       {/* גריד - ווידג'ט + כרטיסיית היסטוריה */}
       <div className="flex flex-col gap-6 sm:flex-row">
-        <ShiftDurationWidget
-          startTime={openShift?.startTime}
-          action={inShift ? clockOut : clockIn}
-          inShift={inShift}
-        />
+        <ShiftDurationWidget startTime={openShift?.startTime} inShift={inShift}>
+          {inShift ? (
+            <ClockOutButton />
+          ) : (
+            <ClockInButton workTypes={workTypes} />
+          )}
+        </ShiftDurationWidget>
 
         <section className="flex flex-1 flex-col justify-center rounded-3xl border-2 bg-card p-6 shadow-md dark:shadow-secondary/50">
           <div className="space-y-3 text-sm text-muted-foreground">

@@ -1,18 +1,20 @@
 // app/admin/_components/employees-data-table.tsx
 "use client";
 
-import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Text, CalendarIcon, DollarSign } from "lucide-react";
+import { CalendarIcon, DollarSign, Text } from "lucide-react";
+import * as React from "react";
 
 import { DataTable } from "@/components/data-table/data-table";
-import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
-import { DataTableSortList } from "@/components/data-table/data-table-sort-list";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { DataTableSortList } from "@/components/data-table/data-table-sort-list";
+import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { useDataTable } from "@/hooks/use-data-table";
 
-import { EmployeeFormDialog } from "./employee-form-dialog";
 import { DeleteEmployeeDialog } from "./delete-employee-dialog";
+import { EmployeeBonusesDialog } from "./employee-bonuses-dialog";
+import { EmployeeFormDialog } from "./employee-form-dialog";
+import { EmployeeRatesDialog } from "./employee-rates-dialog";
 
 export type EmployeeTableRow = {
   id: string;
@@ -23,14 +25,26 @@ export type EmployeeTableRow = {
   createdAt: string;
 };
 
-export function EmployeesDataTable({ data }: { data: EmployeeTableRow[] }) {
+type EmployeesDataTableProps = {
+  data: EmployeeTableRow[];
+  workTypes: { id: string; name: string }[];
+};
+
+export function EmployeesDataTable({
+  data,
+  workTypes,
+}: EmployeesDataTableProps) {
   const columns = React.useMemo<ColumnDef<EmployeeTableRow>[]>(
     () => [
       {
         id: "fullName",
         accessorKey: "fullName",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="שם מלא" label="שם מלא" />
+          <DataTableColumnHeader
+            column={column}
+            title="שם מלא"
+            label="שם מלא"
+          />
         ),
         cell: ({ row }) => <div>{row.getValue("fullName") as string}</div>,
         meta: {
@@ -161,6 +175,16 @@ export function EmployeesDataTable({ data }: { data: EmployeeTableRow[] }) {
 
           return (
             <div className="flex items-center justify-end gap-1">
+              <EmployeeRatesDialog
+                employeeId={employee.id}
+                employeeName={employee.fullName}
+                baseHourlyRate={employee.baseHourlyRate}
+                workTypes={workTypes}
+              />
+              <EmployeeBonusesDialog
+                employeeId={employee.id}
+                employeeName={employee.fullName}
+              />
               <EmployeeFormDialog mode="edit" employee={employee} />
               <DeleteEmployeeDialog
                 employeeId={employee.id}
@@ -173,7 +197,7 @@ export function EmployeesDataTable({ data }: { data: EmployeeTableRow[] }) {
         enableHiding: false,
       },
     ],
-    []
+    [workTypes]
   );
 
   const { table } = useDataTable({

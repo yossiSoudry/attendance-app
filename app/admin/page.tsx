@@ -1,16 +1,24 @@
 // app/admin/page.tsx
 import { prisma } from "@/lib/prisma";
 import type { Employee } from "@prisma/client";
+import Link from "next/link";
+import { Briefcase, Clock, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   EmployeesDataTable,
   type EmployeeTableRow,
 } from "./_components/employees-data-table";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const employees: Employee[] = await prisma.employee.findMany({
     orderBy: { createdAt: "desc" },
+  });
+
+  const workTypes = await prisma.workType.findMany({
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
   });
 
   const rows: EmployeeTableRow[] = employees.map((emp) => ({
@@ -32,6 +40,28 @@ export default async function AdminPage() {
           זהו מסך בסיסי המציג את רשימת העובדים. בהמשך נוסיף כאן דשבורד, פילטרים
           ופעולות עריכה מתקדמות.
         </p>
+
+        {/* ניווט */}
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/admin" className="gap-2">
+              <Users className="h-4 w-4" />
+              עובדים
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/admin/shifts" className="gap-2">
+              <Clock className="h-4 w-4" />
+              משמרות
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/admin/work-types" className="gap-2">
+              <Briefcase className="h-4 w-4" />
+              סוגי עבודה
+            </Link>
+          </Button>
+        </div>
       </section>
 
       <section className="rounded-3xl border border-border bg-card p-4">
@@ -43,7 +73,7 @@ export default async function AdminPage() {
             </p>
           </div>
         ) : (
-          <EmployeesDataTable data={rows} />
+          <EmployeesDataTable data={rows} workTypes={workTypes} />
         )}
       </section>
     </div>

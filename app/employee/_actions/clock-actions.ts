@@ -1,0 +1,173 @@
+// app/employee/_actions/clock-actions.ts
+"use server";
+
+import { prisma } from "@/lib/prisma";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { ActorType, ShiftStatus, TimeEventType } from "@prisma/client";
+
+export type ClockInResult = {
+  success: boolean;
+  message: string;
+};
+
+export async function clockIn(workTypeId?: string): Promise<ClockInResult> {
+  const cookieStore = await cookies();
+  const employeeId = cookieStore.get("employeeId")?.value;
+
+  if (!employeeId) {
+    redirect("/employee/login");
+  }
+
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId },
+  });
+
+  if (!employee) {
+    cookieStore.set("employeeId", "", { maxAge: 0, path: "/" });
+    redirect("/employee/login");
+  }
+
+  if (employee.status !== "ACTIVE") {
+    return {
+      success: false,
+      message: "החשבון שלך חסום. פנה למנהל.",
+    };
+  }
+
+  // Check for existing open shift
+  const existingOpen = await prisma.shift.findFirst({
+    where: {
+      employeeId: employee.id,
+      status: ShiftStatus.OPEN,
+    },
+  });
+
+  if (existingOpen) {
+    return {
+      success: false,
+      message: "יש לך כבר משמרת פתוחה",
+    };
+  }
+
+  // Validate workTypeId if provided
+  if (workTypeId) {
+    const workType = await prisma.workType.findUnique({
+      where: { id: workTypeId },
+    });
+
+    if (!workType) {
+      return {
+        success: false,
+        message: "סוג העבודה לא נמצא",
+      };
+    }
+  }
+
+  const now = new Date();
+
+  const shift = await prisma.shift.create({
+    data: {
+      employeeId: employee.id,
+      workTypeId: workTypeId || null,
+      status: ShiftStatus.OPEN,
+      startTime: now,
+      source: "web",
+    },
+  });
+
+  await prisma.timeEvent.create({
+    data: {
+      employeeId: employee.id,
+      shiftId: shift.id,
+      eventType: TimeEventType.CLOCK_IN,
+      createdBy: ActorType.EMPLOYEE,
+      time: now,
+    },
+  });
+
+  revalidatePath("/employee");
+
+  return {
+    success: true,
+    message: "נכנסת למשמרת בהצלחה",
+  };
+}
+
+export async function clockOut(): Promise<ClockInResult> {
+  const cookieStore = await cookies();
+  const employeeId = cookieStore.get("employeeId")?.value;
+
+  if (!employeeId) {
+    redirect("/employee/login");
+  }
+
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId },
+  });
+
+  if (!employee) {
+    cookieStore.set("employeeId", "", { maxAge: 0, path: "/" });
+    redirect("/employee/login");
+  }
+
+  const openShift = await prisma.shift.findFirst({
+    where: {
+      employeeId: employee.id,
+      status: ShiftStatus.OPEN,
+    },
+    orderBy: { startTime: "desc" },
+  });
+
+  if (!openShift) {
+    return {
+      success: false,
+      message: "אין משמרת פתוחה",
+    };
+  }
+
+  const now = new Date();
+
+  await prisma.shift.update({
+    where: { id: openShift.id },
+    data: {
+      endTime: now,
+      status: ShiftStatus.CLOSED,
+    },
+  });
+
+  await prisma.timeEvent.create({
+    data: {
+      employeeId: employee.id,
+      shiftId: openShift.id,
+      eventType: TimeEventType.CLOCK_OUT,
+      createdBy: ActorType.EMPLOYEE,
+      time: now,
+    },
+  });
+
+  revalidatePath("/employee");
+
+  return {
+    success: true,
+    message: "יצאת מהמשמרת בהצלחה",
+  };
+}
+
+export async function getWorkTypesForEmployee() {
+  const workTypes = await prisma.workType.findMany({
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      isDefault: true,
+    },
+    orderBy: [
+      { isDefault: "desc" }, // Default first
+      { name: "asc" },
+    ],
+  });
+
+  return workTypes;
+}
