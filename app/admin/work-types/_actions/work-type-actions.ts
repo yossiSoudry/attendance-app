@@ -7,7 +7,7 @@ import {
   workTypeFormSchema,
   type WorkTypeFormValues,
 } from "@/lib/validations/work-type";
-import { ActorType } from "@prisma/client";
+import type { ActorType } from "@/types/prisma";
 
 export type ActionResult = {
   success: boolean;
@@ -49,7 +49,7 @@ export async function createWorkType(
   // רישום ב-AuditLog
   await prisma.auditLog.create({
     data: {
-      actorType: ActorType.MANAGER,
+      actorType: "MANAGER" as ActorType,
       entity: "WORK_TYPE",
       entityId: workType.id,
       action: "CREATE",
@@ -122,7 +122,7 @@ export async function updateWorkType(
   // רישום ב-AuditLog
   await prisma.auditLog.create({
     data: {
-      actorType: ActorType.MANAGER,
+      actorType: "MANAGER" as ActorType,
       entity: "WORK_TYPE",
       entityId: id,
       action: "UPDATE",
@@ -189,7 +189,7 @@ export async function deleteWorkType(id: string): Promise<ActionResult> {
   // רישום ב-AuditLog
   await prisma.auditLog.create({
     data: {
-      actorType: ActorType.MANAGER,
+      actorType: "MANAGER" as ActorType,
       entity: "WORK_TYPE",
       entityId: id,
       action: "DELETE",

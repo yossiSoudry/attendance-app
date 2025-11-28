@@ -2,7 +2,7 @@
 import { ShiftDurationWidget } from "@/components/shift-duration-widget";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
-import { ShiftStatus } from "@prisma/client";
+import type { ShiftStatus } from "@/types/prisma";
 import { History } from "lucide-react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -33,7 +33,7 @@ export default async function EmployeeHomePage() {
   const openShift = await prisma.shift.findFirst({
     where: {
       employeeId: employee.id,
-      status: ShiftStatus.OPEN,
+      status: "OPEN",
     },
     orderBy: { startTime: "desc" },
     include: {
@@ -46,7 +46,7 @@ export default async function EmployeeHomePage() {
   const lastClosedShift = await prisma.shift.findFirst({
     where: {
       employeeId: employee.id,
-      status: ShiftStatus.CLOSED,
+      status: "CLOSED",
     },
     orderBy: { endTime: "desc" },
   });

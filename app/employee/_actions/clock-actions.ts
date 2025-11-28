@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { ActorType, ShiftStatus, TimeEventType } from "@prisma/client";
+import type { ActorType, ShiftStatus, TimeEventType } from "@/types/prisma";
 
 export type ClockInResult = {
   success: boolean;
@@ -40,7 +40,7 @@ export async function clockIn(workTypeId?: string): Promise<ClockInResult> {
   const existingOpen = await prisma.shift.findFirst({
     where: {
       employeeId: employee.id,
-      status: ShiftStatus.OPEN,
+      status: "OPEN" as ShiftStatus,
     },
   });
 
@@ -71,7 +71,7 @@ export async function clockIn(workTypeId?: string): Promise<ClockInResult> {
     data: {
       employeeId: employee.id,
       workTypeId: workTypeId || null,
-      status: ShiftStatus.OPEN,
+      status: "OPEN" as ShiftStatus,
       startTime: now,
       source: "web",
     },
@@ -81,8 +81,8 @@ export async function clockIn(workTypeId?: string): Promise<ClockInResult> {
     data: {
       employeeId: employee.id,
       shiftId: shift.id,
-      eventType: TimeEventType.CLOCK_IN,
-      createdBy: ActorType.EMPLOYEE,
+      eventType: "CLOCK_IN" as TimeEventType,
+      createdBy: "EMPLOYEE" as ActorType,
       time: now,
     },
   });
@@ -115,7 +115,7 @@ export async function clockOut(): Promise<ClockInResult> {
   const openShift = await prisma.shift.findFirst({
     where: {
       employeeId: employee.id,
-      status: ShiftStatus.OPEN,
+      status: "OPEN" as ShiftStatus,
     },
     orderBy: { startTime: "desc" },
   });
@@ -133,7 +133,7 @@ export async function clockOut(): Promise<ClockInResult> {
     where: { id: openShift.id },
     data: {
       endTime: now,
-      status: ShiftStatus.CLOSED,
+      status: "CLOSED" as ShiftStatus,
     },
   });
 
@@ -141,8 +141,8 @@ export async function clockOut(): Promise<ClockInResult> {
     data: {
       employeeId: employee.id,
       shiftId: openShift.id,
-      eventType: TimeEventType.CLOCK_OUT,
-      createdBy: ActorType.EMPLOYEE,
+      eventType: "CLOCK_OUT" as TimeEventType,
+      createdBy: "EMPLOYEE" as ActorType,
       time: now,
     },
   });

@@ -1,7 +1,7 @@
 // app/employee/history/_components/shift-history-list.tsx
 "use client";
 
-import type { ShiftStatus } from "@prisma/client";
+import type { ShiftStatus } from "@/types/prisma";
 import { Clock, CalendarIcon } from "lucide-react";
 import {
   Accordion,

@@ -4,7 +4,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { shiftFormSchema, type ShiftFormValues } from "@/lib/validations/shift";
-import { ActorType, ShiftStatus } from "@prisma/client";
+import type { ActorType, ShiftStatus } from "@/types/prisma";
 
 export type ActionResult = {
   success: boolean;
@@ -50,7 +50,7 @@ export async function createShift(data: ShiftFormValues): Promise<ActionResult> 
       workTypeId: workTypeId || null,
       startTime: startDateTime,
       endTime: endDateTime,
-      status: ShiftStatus.CLOSED,
+      status: "CLOSED" as ShiftStatus,
       source: "web",
       isManual: true,
       notesManager,
@@ -60,7 +60,7 @@ export async function createShift(data: ShiftFormValues): Promise<ActionResult> 
   // רישום ב-AuditLog
   await prisma.auditLog.create({
     data: {
-      actorType: ActorType.MANAGER,
+      actorType: "MANAGER" as ActorType,
       entity: "SHIFT",
       entityId: shift.id,
       action: "CREATE",
@@ -68,7 +68,7 @@ export async function createShift(data: ShiftFormValues): Promise<ActionResult> 
         employeeId,
         startTime: startDateTime,
         endTime: endDateTime,
-        status: ShiftStatus.CLOSED,
+        status: "CLOSED" as ShiftStatus,
       },
     },
   });
@@ -142,7 +142,7 @@ export async function updateShift(
   // רישום ב-AuditLog
   await prisma.auditLog.create({
     data: {
-      actorType: ActorType.MANAGER,
+      actorType: "MANAGER" as ActorType,
       entity: "SHIFT",
       entityId: id,
       action: "UPDATE",
@@ -191,7 +191,7 @@ export async function deleteShift(id: string): Promise<ActionResult> {
   // רישום ב-AuditLog
   await prisma.auditLog.create({
     data: {
-      actorType: ActorType.MANAGER,
+      actorType: "MANAGER" as ActorType,
       entity: "SHIFT",
       entityId: id,
       action: "DELETE",

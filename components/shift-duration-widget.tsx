@@ -15,14 +15,18 @@ export function ShiftDurationWidget({
   inShift,
   children,
 }: ShiftDurationWidgetProps) {
-  const [duration, setDuration] = React.useState(() =>
-    startTime
-      ? Math.floor((Date.now() - new Date(startTime).getTime()) / 1000)
-      : 0
-  );
+  const [duration, setDuration] = React.useState(0);
+  const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
+    setIsClient(true);
+
     if (!startTime) return;
+
+    // Calculate initial duration on client
+    setDuration(
+      Math.floor((Date.now() - new Date(startTime).getTime()) / 1000)
+    );
 
     const timer = setInterval(() => {
       setDuration(
@@ -48,7 +52,9 @@ export function ShiftDurationWidget({
 
         {inShift && (
           <WidgetTitle className="text-5xl tabular-nums tracking-widest">
-            {formatTime(hours)}:{formatTime(minutes)}:{formatTime(seconds)}
+            {isClient
+              ? `${formatTime(hours)}:${formatTime(minutes)}:${formatTime(seconds)}`
+              : "00:00:00"}
           </WidgetTitle>
         )}
 

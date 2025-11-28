@@ -113,7 +113,7 @@ async function getEmployeeBonuses(employeeId: string): Promise<BonusInfo[]> {
     where: { employeeId },
   });
 
-  return bonuses.map((b) => ({
+  return bonuses.map((b: typeof bonuses[number]) => ({
     id: b.id,
     bonusType: b.bonusType as "HOURLY" | "ONE_TIME",
     amountPerHour: b.amountPerHour,

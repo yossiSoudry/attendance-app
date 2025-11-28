@@ -4,7 +4,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { employeeFormSchema, type EmployeeFormValues } from "@/lib/validations/employee";
-import { ActorType } from "@prisma/client";
+import type { ActorType } from "@/types/prisma";
 
 export type ActionResult = {
   success: boolean;
@@ -50,7 +50,7 @@ export async function createEmployee(data: EmployeeFormValues): Promise<ActionRe
   // רישום ב-AuditLog
   await prisma.auditLog.create({
     data: {
-      actorType: ActorType.MANAGER,
+      actorType: "MANAGER" as ActorType,
       entity: "EMPLOYEE",
       entityId: employee.id,
       action: "CREATE",
@@ -135,7 +135,7 @@ export async function updateEmployee(
   // רישום ב-AuditLog
   await prisma.auditLog.create({
     data: {
-      actorType: ActorType.MANAGER,
+      actorType: "MANAGER" as ActorType,
       entity: "EMPLOYEE",
       entityId: id,
       action: "UPDATE",
@@ -183,7 +183,7 @@ export async function deleteEmployee(id: string): Promise<ActionResult> {
   // רישום ב-AuditLog
   await prisma.auditLog.create({
     data: {
-      actorType: ActorType.MANAGER,
+      actorType: "MANAGER" as ActorType,
       entity: "EMPLOYEE",
       entityId: id,
       action: "DELETE",

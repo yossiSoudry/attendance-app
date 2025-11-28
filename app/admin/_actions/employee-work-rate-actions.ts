@@ -3,7 +3,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { ActorType } from "@prisma/client";
+import type { ActorType, EmployeeWorkRate } from "@/types/prisma";
 
 export type ActionResult = {
   success: boolean;
@@ -30,7 +30,7 @@ export async function getEmployeeRates(employeeId: string) {
     orderBy: { workType: { name: "asc" } },
   });
 
-  return rates.map((rate) => ({
+  return rates.map((rate: typeof rates[number]) => ({
     id: rate.id,
     workTypeId: rate.workTypeId,
     workTypeName: rate.workType.name,
@@ -97,7 +97,7 @@ export async function upsertEmployeeRate(
 
     await prisma.auditLog.create({
       data: {
-        actorType: ActorType.MANAGER,
+        actorType: "MANAGER" as ActorType,
         entity: "EMPLOYEE_WORK_RATE",
         entityId: existing.id,
         action: "UPDATE",
@@ -117,7 +117,7 @@ export async function upsertEmployeeRate(
 
     await prisma.auditLog.create({
       data: {
-        actorType: ActorType.MANAGER,
+        actorType: "MANAGER" as ActorType,
         entity: "EMPLOYEE_WORK_RATE",
         entityId: newRate.id,
         action: "CREATE",
@@ -170,7 +170,7 @@ export async function deleteEmployeeRate(
 
   await prisma.auditLog.create({
     data: {
-      actorType: ActorType.MANAGER,
+      actorType: "MANAGER" as ActorType,
       entity: "EMPLOYEE_WORK_RATE",
       entityId: existing.id,
       action: "DELETE",
@@ -207,17 +207,19 @@ export async function saveEmployeeRates(
     where: { employeeId },
   });
 
-  const existingMap = new Map(
-    existingRates.map((r) => [r.workTypeId, r])
+  type ExistingRate = typeof existingRates[number];
+
+  const existingMap = new Map<string, ExistingRate>(
+    existingRates.map((r: ExistingRate) => [r.workTypeId, r])
   );
 
   const newRatesMap = new Map(
-    rates.filter((r) => r.hourlyRate > 0).map((r) => [r.workTypeId, r])
+    rates.filter((r: EmployeeRateInput) => r.hourlyRate > 0).map((r: EmployeeRateInput) => [r.workTypeId, r])
   );
 
   // Delete rates that are no longer present or have 0 value
   const toDelete = existingRates.filter(
-    (r) => !newRatesMap.has(r.workTypeId)
+    (r: ExistingRate) => !newRatesMap.has(r.workTypeId)
   );
 
   for (const rate of toDelete) {
@@ -227,7 +229,7 @@ export async function saveEmployeeRates(
 
     await prisma.auditLog.create({
       data: {
-        actorType: ActorType.MANAGER,
+        actorType: "MANAGER" as ActorType,
         entity: "EMPLOYEE_WORK_RATE",
         entityId: rate.id,
         action: "DELETE",
@@ -254,7 +256,7 @@ export async function saveEmployeeRates(
 
         await prisma.auditLog.create({
           data: {
-            actorType: ActorType.MANAGER,
+            actorType: "MANAGER" as ActorType,
             entity: "EMPLOYEE_WORK_RATE",
             entityId: existing.id,
             action: "UPDATE",
@@ -274,7 +276,7 @@ export async function saveEmployeeRates(
 
       await prisma.auditLog.create({
         data: {
-          actorType: ActorType.MANAGER,
+          actorType: "MANAGER" as ActorType,
           entity: "EMPLOYEE_WORK_RATE",
           entityId: newRate.id,
           action: "CREATE",
