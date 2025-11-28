@@ -8,8 +8,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ClockInButton } from "./_components/clock-in-button";
 import { ClockOutButton } from "./_components/clock-out-button";
-import { RetroShiftFormDialog } from "./_components/retro-shift-form-dialog";
+import { EmployeePayrollDialog } from "./_components/employee-payroll-dialog";
 import { MyPendingShifts } from "./_components/my-pending-shifts";
+import { RetroShiftFormDialog } from "./_components/retro-shift-form-dialog";
 
 export const dynamic = "force-dynamic";
 
@@ -194,6 +195,19 @@ export default async function EmployeeHomePage() {
                   היסטוריית משמרות
                 </a>
               </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" asChild>
+                  <a href="/employee/history" className="gap-2">
+                    <History className="h-4 w-4" />
+                    היסטוריית משמרות
+                  </a>
+                </Button>
+                <RetroShiftFormDialog
+                  employeeId={employee.id}
+                  workTypes={workTypes}
+                />
+                <EmployeePayrollDialog employeeId={employee.id} />
+              </div>
               <RetroShiftFormDialog
                 employeeId={employee.id}
                 workTypes={workTypes}

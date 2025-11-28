@@ -1,3 +1,5 @@
+// src/components/animate-ui/components/radix/dialog.tsx
+
 import * as React from 'react';
 import { XIcon } from 'lucide-react';
 
