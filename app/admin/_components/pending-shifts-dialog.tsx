@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { DialogIcon } from "@/components/ui/dialog-icon";
 
 import {
   approveAllPendingShifts,
@@ -167,8 +168,10 @@ export function PendingShiftsDialog({
         <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogIcon variant="warning">
               <Clock className="h-5 w-5" />
+            </DialogIcon>
+            <DialogTitle className="flex items-center gap-2">
               משמרות ממתינות לאישור
               {shifts.length > 0 && (
                 <Badge variant="secondary">{shifts.length}</Badge>
@@ -301,8 +304,10 @@ export function PendingShiftsDialog({
       <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-destructive" />
+            <DialogIcon variant="destructive">
+              <AlertCircle className="h-5 w-5" />
+            </DialogIcon>
+            <AlertDialogTitle>
               דחיית משמרת
             </AlertDialogTitle>
             <AlertDialogDescription>

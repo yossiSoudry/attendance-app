@@ -4,7 +4,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Plus, Pencil } from "lucide-react";
+import { Loader2, Plus, Pencil, UserPlus, UserPen } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DialogIcon } from "@/components/ui/dialog-icon";
 
 import {
   employeeFormSchema,
@@ -134,6 +135,13 @@ export function EmployeeFormDialog({
       <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
+          <DialogIcon>
+            {mode === "create" ? (
+              <UserPlus className="h-5 w-5" />
+            ) : (
+              <UserPen className="h-5 w-5" />
+            )}
+          </DialogIcon>
           <DialogTitle>
             {mode === "create" ? "יצירת עובד חדש" : "עריכת עובד"}
           </DialogTitle>

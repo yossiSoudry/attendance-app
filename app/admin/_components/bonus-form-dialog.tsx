@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
-import { CalendarIcon, Loader2, Pencil, Plus } from "lucide-react";
+import { CalendarIcon, Gift, Loader2, Pencil, Plus } from "lucide-react";
 import * as React from "react";
 import { useForm, useWatch } from "react-hook-form";
 
@@ -42,6 +42,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { DialogIcon } from "@/components/ui/dialog-icon";
 import { cn } from "@/lib/utils";
 
 import { bonusFormSchema, type BonusFormValues } from "@/lib/validations/bonus";
@@ -150,6 +151,9 @@ export function BonusFormDialog({
       <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[500px]">
         <DialogHeader>
+          <DialogIcon variant="success">
+            <Gift className="h-5 w-5" />
+          </DialogIcon>
           <DialogTitle>
             {mode === "create" ? "הוספת בונוס חדש" : "עריכת בונוס"}
           </DialogTitle>

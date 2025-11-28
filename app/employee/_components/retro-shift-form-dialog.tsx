@@ -20,6 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { DialogIcon } from "@/components/ui/dialog-icon";
 import {
   Form,
   FormControl,
@@ -178,8 +179,10 @@ export function RetroShiftFormDialog({
       <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogIcon variant="warning">
             <Clock className="h-5 w-5" />
+          </DialogIcon>
+          <DialogTitle>
             דיווח משמרת רטרואקטיבי
           </DialogTitle>
           <DialogDescription>

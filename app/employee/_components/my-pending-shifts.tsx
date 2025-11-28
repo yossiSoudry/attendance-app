@@ -28,6 +28,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { DialogIcon } from "@/components/ui/dialog-icon";
 
 import {
   cancelPendingShift,
@@ -152,6 +153,9 @@ export function MyPendingShifts({ employeeId }: MyPendingShiftsProps) {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
+                  <DialogIcon variant="destructive">
+                    <Trash2 className="h-5 w-5" />
+                  </DialogIcon>
                   <AlertDialogTitle>ביטול משמרת</AlertDialogTitle>
                   <AlertDialogDescription>
                     האם לבטל את המשמרת מתאריך {shift.date}?

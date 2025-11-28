@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
-import { Loader2, Pencil, Plus } from "lucide-react";
+import { Clock, Loader2, Pencil, Plus } from "lucide-react";
 import * as React from "react";
 import { useForm } from "react-hook-form";
 
@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { DialogIcon } from "@/components/ui/dialog-icon";
 
 import { shiftFormSchema, type ShiftFormValues } from "@/lib/validations/shift";
 import {
@@ -161,6 +162,9 @@ export function ShiftFormDialog({
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[500px]">
         <DialogHeader>
+          <DialogIcon>
+            <Clock className="h-5 w-5" />
+          </DialogIcon>
           <DialogTitle>
             {mode === "create" ? "יצירת משמרת חדשה" : "עריכת משמרת"}
           </DialogTitle>

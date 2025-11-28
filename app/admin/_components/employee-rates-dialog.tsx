@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DialogIcon } from "@/components/ui/dialog-icon";
 
 import {
   getEmployeeRates,
@@ -138,6 +139,9 @@ export function EmployeeRatesDialog({
       <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[500px]">
         <DialogHeader>
+          <DialogIcon>
+            <Banknote className="h-5 w-5" />
+          </DialogIcon>
           <DialogTitle>ניהול תעריפים - {employeeName}</DialogTitle>
           <DialogDescription>
             הגדר שכר לשעה עבור כל סוג עבודה. השאר ריק או 0 לשימוש בשכר הבסיס.

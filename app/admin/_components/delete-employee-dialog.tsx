@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, UserX } from "lucide-react";
 
 import {
   AlertDialog,
@@ -16,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { DialogIcon } from "@/components/ui/dialog-icon";
 
 import { deleteEmployee } from "../_actions/employee-actions";
 
@@ -47,6 +48,9 @@ export function DeleteEmployeeDialog({
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
+          <DialogIcon variant="destructive">
+            <UserX className="h-5 w-5" />
+          </DialogIcon>
           <AlertDialogTitle>מחיקת עובד</AlertDialogTitle>
           <AlertDialogDescription>
             האם אתה בטוח שברצונך למחוק את העובד{" "}

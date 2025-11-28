@@ -25,6 +25,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { DialogIcon } from "@/components/ui/dialog-icon";
 
 import {
   deleteBonus,
@@ -110,6 +111,9 @@ export function EmployeeBonusesDialog({
         <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[550px]">
           <DialogHeader>
+            <DialogIcon variant="success">
+              <Gift className="h-5 w-5" />
+            </DialogIcon>
             <DialogTitle>ניהול בונוסים - {employeeName}</DialogTitle>
             <DialogDescription>
               הוסף, ערוך או מחק בונוסים לעובד
@@ -204,6 +208,9 @@ export function EmployeeBonusesDialog({
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
+            <DialogIcon variant="destructive">
+              <Trash2 className="h-5 w-5" />
+            </DialogIcon>
             <AlertDialogTitle>מחיקת בונוס</AlertDialogTitle>
             <AlertDialogDescription>
               האם אתה בטוח שברצונך למחוק את הבונוס{" "}
