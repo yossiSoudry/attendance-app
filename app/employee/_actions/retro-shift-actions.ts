@@ -210,7 +210,7 @@ export async function getEmployeePendingShifts(
     take: 20,
   });
 
-  return shifts.map((shift) => ({
+  return shifts.map((shift: typeof shifts[number]) => ({
     id: shift.id,
     date: shift.startTime.toLocaleDateString("he-IL"),
     startTime: shift.startTime.toLocaleTimeString("he-IL", {

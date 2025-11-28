@@ -50,7 +50,7 @@ export async function getPendingShifts(): Promise<PendingShiftDetails[]> {
     orderBy: { createdAt: "asc" },
   });
 
-  return shifts.map((shift) => {
+  return shifts.map((shift: typeof shifts[number]) => {
     // Calculate duration
     const durationMs = shift.endTime
       ? shift.endTime.getTime() - shift.startTime.getTime()
@@ -407,7 +407,7 @@ export async function approveAllPendingShifts(
         },
         after: {
           status: "CLOSED",
-          shiftIds: pendingShifts.map((s) => s.id),
+          shiftIds: pendingShifts.map((s: { id: string }) => s.id),
         },
       },
     });

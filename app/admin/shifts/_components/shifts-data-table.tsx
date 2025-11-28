@@ -10,7 +10,7 @@ import { DataTableColumnHeader } from "@/components/data-table/data-table-column
 import { DataTableSortList } from "@/components/data-table/data-table-sort-list";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { useDataTable } from "@/hooks/use-data-table";
-import type { ShiftStatus } from "@prisma/client";
+import type { ShiftStatus } from "@/types/prisma";
 import { DeleteShiftDialog } from "./delete-shift-dialog";
 import { ExportShiftsButton } from "./export-shifts-button";
 import { ShiftFormDialog } from "./shift-form-dialog";

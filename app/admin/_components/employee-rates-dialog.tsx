@@ -65,14 +65,14 @@ export function EmployeeRatesDialog({
         .then((existingRates) => {
           // Create a map of existing rates
           const existingMap = new Map(
-            existingRates.map((r) => [r.workTypeId, r.hourlyRate])
+            existingRates.map((r: { workTypeId: string; hourlyRate: number }) => [r.workTypeId, r.hourlyRate])
           );
 
           // Initialize rates for all work types
           const initialRates: RateState[] = workTypes.map((wt) => ({
             workTypeId: wt.id,
             workTypeName: wt.name,
-            hourlyRate: existingMap.get(wt.id) ?? 0,
+            hourlyRate: (existingMap.get(wt.id) ?? 0) as number,
           }));
 
           setRates(initialRates);

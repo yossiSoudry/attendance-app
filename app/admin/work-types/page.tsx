@@ -20,7 +20,7 @@ export default async function WorkTypesPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  const rows: WorkTypeTableRow[] = workTypes.map((wt) => ({
+  const rows: WorkTypeTableRow[] = workTypes.map((wt: typeof workTypes[number]) => ({
     id: wt.id,
     name: wt.name,
     description: wt.description,

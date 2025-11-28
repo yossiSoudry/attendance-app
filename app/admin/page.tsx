@@ -1,7 +1,7 @@
 // app/admin/page.tsx
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
-import type { Employee } from "@prisma/client";
+import type { Employee } from "@/types/prisma";
 import { Briefcase, Clock, Users } from "lucide-react";
 import Link from "next/link";
 import { getPendingShiftsCount } from "./_actions/approval-actions";

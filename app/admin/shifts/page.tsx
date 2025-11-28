@@ -26,7 +26,7 @@ export default async function ShiftsPage() {
     orderBy: { startTime: "desc" },
   });
 
-  const rows: ShiftTableRow[] = shifts.map((shift) => ({
+  const rows: ShiftTableRow[] = shifts.map((shift: typeof shifts[number]) => ({
     id: shift.id,
     employeeId: shift.employee.id,
     employeeName: shift.employee.fullName,
@@ -65,8 +65,8 @@ export default async function ShiftsPage() {
       <section className="rounded-3xl border border-border bg-card p-4">
         <ShiftsDataTable
           data={rows}
-          employees={employees.map((e) => ({ label: e.fullName, value: e.id }))}
-          workTypes={workTypes.map((wt) => ({ label: wt.name, value: wt.id }))}
+          employees={employees.map((e: typeof employees[number]) => ({ label: e.fullName, value: e.id }))}
+          workTypes={workTypes.map((wt: typeof workTypes[number]) => ({ label: wt.name, value: wt.id }))}
         />
       </section>
     </div>

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(npx next build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx prisma:*)",
+      "Bash(dir \"C:\\Users\\USER\\Desktop\\projects\\attendance-app\" \")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

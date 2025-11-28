@@ -4,7 +4,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { bonusFormSchema, type BonusFormValues } from "@/lib/validations/bonus";
-import { ActorType, BonusType } from "@prisma/client";
+import type { ActorType, BonusType } from "@/types/prisma";
 
 export type ActionResult = {
   success: boolean;
@@ -33,7 +33,7 @@ export async function getEmployeeBonuses(
 
   const now = new Date();
 
-  return bonuses.map((bonus) => ({
+  return bonuses.map((bonus: typeof bonuses[number]) => ({
     id: bonus.id,
     bonusType: bonus.bonusType,
     amountPerHour: bonus.amountPerHour ? bonus.amountPerHour / 100 : null,
@@ -97,7 +97,7 @@ export async function createBonus(
 
   await prisma.auditLog.create({
     data: {
-      actorType: ActorType.MANAGER,
+      actorType: "MANAGER" as ActorType,
       entity: "EMPLOYEE_BONUS",
       entityId: bonus.id,
       action: "CREATE",
@@ -180,7 +180,7 @@ export async function updateBonus(
 
   await prisma.auditLog.create({
     data: {
-      actorType: ActorType.MANAGER,
+      actorType: "MANAGER" as ActorType,
       entity: "EMPLOYEE_BONUS",
       entityId: bonusId,
       action: "UPDATE",
@@ -234,7 +234,7 @@ export async function deleteBonus(bonusId: string): Promise<ActionResult> {
 
   await prisma.auditLog.create({
     data: {
-      actorType: ActorType.MANAGER,
+      actorType: "MANAGER" as ActorType,
       entity: "EMPLOYEE_BONUS",
       entityId: bonusId,
       action: "DELETE",

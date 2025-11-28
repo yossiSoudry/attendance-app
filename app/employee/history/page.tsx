@@ -61,7 +61,7 @@ export default async function EmployeeHistoryPage({ searchParams }: PageProps) {
     orderBy: { startTime: "desc" },
   });
 
-  const rows = shifts.map((shift) => ({
+  const rows = shifts.map((shift: typeof shifts[number]) => ({
     id: shift.id,
     startTime: shift.startTime.toISOString(),
     endTime: shift.endTime?.toISOString() ?? null,
