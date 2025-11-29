@@ -1,9 +1,9 @@
-// app/employee/history/page.tsx
+// app/employee/(with-sidebar)/history/page.tsx
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { ShiftHistoryList } from "./_components/shift-history-list";
-import { PeriodNavigator } from "./_components/period-navigator";
+import { ShiftHistoryList } from "../../_components/history/shift-history-list";
+import { PeriodNavigator } from "../../_components/history/period-navigator";
 
 export const dynamic = "force-dynamic";
 
@@ -70,13 +70,11 @@ export default async function EmployeeHistoryPage({ searchParams }: PageProps) {
   }));
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
-      <section className="rounded-3xl border-2 bg-card p-6 shadow-md dark:shadow-secondary/50">
+    <div className="flex w-full flex-col gap-6">
+      <section className="rounded-2xl border bg-card p-6 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-foreground">
-              היסטוריית משמרות
-            </h1>
+            <h1 className="text-2xl font-bold">היסטוריית משמרות</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {shifts.length} משמרות בתקופה זו
             </p>

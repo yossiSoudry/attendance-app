@@ -16,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { DialogIcon } from "@/components/ui/dialog-icon";
 
 import { deleteWorkType } from "../_actions/work-type-actions";
 
@@ -64,6 +65,9 @@ export function DeleteWorkTypeDialog({
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
+          <DialogIcon variant="destructive">
+            <Trash2 className="h-5 w-5" />
+          </DialogIcon>
           <AlertDialogTitle>מחיקת סוג עבודה</AlertDialogTitle>
           <AlertDialogDescription>
             {hasShifts ? (

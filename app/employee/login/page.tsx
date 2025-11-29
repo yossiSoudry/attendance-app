@@ -1,5 +1,6 @@
 // app/employee/login/page.tsx
 import WidgetDemo from "@/components/clock-05";
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import type { Metadata } from "next";
 import { LoginForm } from "./login-form";
 
@@ -29,10 +30,17 @@ export default async function EmployeeLoginPage({ searchParams }: PageProps) {
         : undefined;
 
   return (
-    <div className="flex flex-col">
-      <header className="mb-10 flex w-full items-center justify-center">
-        <WidgetDemo />
-      </header>
+    <main className="min-h-screen px-4 py-10 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-4xl">
+        {/* Theme Toggle */}
+        <div className="mb-6 flex justify-end">
+          <AnimatedThemeToggler />
+        </div>
+
+        <div className="flex flex-col">
+          <header className="mb-10 flex w-full items-center justify-center">
+            <WidgetDemo />
+          </header>
 
       <div className="flex flex-1 items-center justify-center">
         <div className="relative w-full max-w-md">
@@ -64,7 +72,9 @@ export default async function EmployeeLoginPage({ searchParams }: PageProps) {
             </div>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+      </div>
+    </main>
   );
 }

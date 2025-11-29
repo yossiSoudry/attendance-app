@@ -1,4 +1,4 @@
-// app/employee/_components/employee-payroll-dialog.tsx
+// app/employee/_components/payroll-content.tsx
 "use client";
 
 import {
@@ -15,22 +15,12 @@ import * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { DialogIcon } from "@/components/ui/dialog-icon";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Collapsible,
   CollapsibleContent,
@@ -48,9 +38,8 @@ import {
 // Types
 // ========================================
 
-type EmployeePayrollDialogProps = {
+type PayrollContentProps = {
   employeeId: string;
-  trigger?: React.ReactNode;
 };
 
 // ========================================
@@ -308,12 +297,8 @@ function SummaryCard({
 // Main Component
 // ========================================
 
-export function EmployeePayrollDialog({
-  employeeId,
-  trigger,
-}: EmployeePayrollDialogProps) {
-  const [open, setOpen] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
+export function PayrollContent({ employeeId }: PayrollContentProps) {
+  const [isLoading, setIsLoading] = React.useState(true);
   const [availableMonths, setAvailableMonths] = React.useState<
     { label: string; year: number; month: number }[]
   >([]);
@@ -324,47 +309,45 @@ export function EmployeePayrollDialog({
   const [payrollData, setPayrollData] =
     React.useState<EmployeePayrollSummary | null>(null);
 
-  // Define callbacks before useEffects
-  const loadAvailableMonths = React.useCallback(async () => {
-    setIsLoading(true);
-    const months = await getEmployeeAvailableMonths(employeeId);
-    setAvailableMonths(months);
-
-    // Select current or most recent month
-    if (months.length > 0) {
-      const now = new Date();
-      const currentMonth = months.find(
-        (m) => m.year === now.getFullYear() && m.month === now.getMonth() + 1
-      );
-      setSelectedMonth(currentMonth ?? months[0]);
-    }
-
-    setIsLoading(false);
-  }, [employeeId]);
-
-  const loadPayroll = React.useCallback(
-    async (year: number, month: number) => {
-      setIsLoading(true);
-      const data = await getEmployeeMonthlyPayroll(employeeId, year, month);
-      setPayrollData(data);
-      setIsLoading(false);
-    },
-    [employeeId]
-  );
-
-  // Load available months on open
+  // Load available months on mount
   React.useEffect(() => {
-    if (open) {
-      loadAvailableMonths();
+    async function loadMonths() {
+      setIsLoading(true);
+      const months = await getEmployeeAvailableMonths(employeeId);
+      setAvailableMonths(months);
+
+      // Select current or most recent month
+      if (months.length > 0) {
+        const now = new Date();
+        const currentMonth = months.find(
+          (m) => m.year === now.getFullYear() && m.month === now.getMonth() + 1
+        );
+        setSelectedMonth(currentMonth ?? months[0]);
+      }
+
+      setIsLoading(false);
     }
-  }, [open, loadAvailableMonths]);
+
+    loadMonths();
+  }, [employeeId]);
 
   // Load payroll when month changes
   React.useEffect(() => {
     if (selectedMonth) {
-      loadPayroll(selectedMonth.year, selectedMonth.month);
+      async function loadPayroll() {
+        setIsLoading(true);
+        const data = await getEmployeeMonthlyPayroll(
+          employeeId,
+          selectedMonth!.year,
+          selectedMonth!.month
+        );
+        setPayrollData(data);
+        setIsLoading(false);
+      }
+
+      loadPayroll();
     }
-  }, [selectedMonth, loadPayroll]);
+  }, [selectedMonth, employeeId]);
 
   function navigateMonth(direction: "prev" | "next") {
     if (!selectedMonth || availableMonths.length === 0) return;
@@ -389,29 +372,35 @@ export function EmployeePayrollDialog({
   const canGoPrev = currentIndex < availableMonths.length - 1;
   const canGoNext = currentIndex > 0;
 
-  const defaultTrigger = (
-    <Button variant="outline" size="sm" className="gap-2">
-      <Calculator className="h-4 w-4" />
-      חישוב שכר
-    </Button>
-  );
+  if (isLoading && availableMonths.length === 0) {
+    return (
+      <section className="rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="flex items-center justify-center py-10">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </section>
+    );
+  }
+
+  if (availableMonths.length === 0) {
+    return (
+      <section className="rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="flex flex-col items-center justify-center py-10 text-center">
+          <Calendar className="mb-2 h-12 w-12 text-muted-foreground/50" />
+          <p className="text-muted-foreground">אין משמרות סגורות במערכת</p>
+          <p className="mt-1 text-xs text-muted-foreground/70">
+            חישוב השכר יהיה זמין לאחר סגירת משמרות
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
-      <DialogContent className="flex h-[85vh] max-h-[700px] flex-col sm:max-w-[550px]">
-        <DialogHeader>
-          <DialogIcon variant="success">
-            <Calculator className="h-5 w-5" />
-          </DialogIcon>
-          <DialogTitle>חישוב שכר חודשי</DialogTitle>
-          <DialogDescription>
-            פירוט שכר לפי חוק שעות עבודה ומנוחה
-          </DialogDescription>
-        </DialogHeader>
-
-        {/* Month Selector */}
-        <div className="flex items-center justify-between gap-2 border-b pb-3">
+    <>
+      {/* Month Selector */}
+      <section className="rounded-2xl border bg-card p-4 shadow-sm">
+        <div className="flex items-center justify-center gap-2">
           <Button
             variant="ghost"
             size="icon"
@@ -431,9 +420,9 @@ export function EmployeePayrollDialog({
               const [year, month] = value.split("-").map(Number);
               setSelectedMonth({ year, month });
             }}
-            disabled={isLoading || availableMonths.length === 0}
+            disabled={isLoading}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[200px]">
               <Calendar className="ml-2 h-4 w-4" />
               <SelectValue placeholder="בחר חודש" />
             </SelectTrigger>
@@ -458,43 +447,48 @@ export function EmployeePayrollDialog({
             <ChevronLeft className="h-4 w-4" />
           </Button>
         </div>
+      </section>
 
-        {/* Content */}
-        {isLoading ? (
-          <div className="flex flex-1 items-center justify-center">
+      {/* Content */}
+      {isLoading ? (
+        <section className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="flex items-center justify-center py-10">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        ) : !payrollData || payrollData.shifts.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center text-center">
+        </section>
+      ) : !payrollData || payrollData.shifts.length === 0 ? (
+        <section className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="flex flex-col items-center justify-center py-10 text-center">
             <Calendar className="mb-2 h-12 w-12 text-muted-foreground/50" />
             <p className="text-muted-foreground">אין משמרות בחודש זה</p>
           </div>
-        ) : (
-          <>
-            {/* Summary */}
+        </section>
+      ) : (
+        <>
+          {/* Summary Card */}
+          <section className="rounded-2xl border bg-card p-4 shadow-sm">
             <SummaryCard summary={payrollData.summary} />
+          </section>
 
-            {/* Shifts List */}
-            <div className="mt-3 flex-1 overflow-hidden">
-              <h4 className="mb-2 text-sm font-medium text-muted-foreground">
-                פירוט משמרות ({payrollData.shifts.length})
-              </h4>
-              <ScrollArea className="h-full max-h-[280px]">
-                <div className="space-y-2 pl-1 pr-3">
-                  {payrollData.shifts.map((shift) => (
-                    <ShiftRow key={shift.id} shift={shift} />
-                  ))}
-                </div>
-              </ScrollArea>
+          {/* Shifts List */}
+          <section className="rounded-2xl border bg-card p-4 shadow-sm">
+            <h4 className="mb-3 flex items-center gap-2 font-medium">
+              <Calculator className="h-4 w-4" />
+              פירוט משמרות ({payrollData.shifts.length})
+            </h4>
+            <div className="space-y-2">
+              {payrollData.shifts.map((shift) => (
+                <ShiftRow key={shift.id} shift={shift} />
+              ))}
             </div>
-          </>
-        )}
+          </section>
 
-        {/* Legal Note */}
-        <div className="border-t pt-3 text-[11px] text-muted-foreground">
-          * החישוב לפי חוק שעות עבודה ומנוחה. ייתכנו הפרשים קטנים בעיגול.
-        </div>
-      </DialogContent>
-    </Dialog>
+          {/* Legal Note */}
+          <div className="text-center text-[11px] text-muted-foreground">
+            * החישוב לפי חוק שעות עבודה ומנוחה. ייתכנו הפרשים קטנים בעיגול.
+          </div>
+        </>
+      )}
+    </>
   );
 }

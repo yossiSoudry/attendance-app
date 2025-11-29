@@ -1,11 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run build:*)",
-      "Bash(npx next build:*)",
-      "Bash(npx tsc:*)",
-      "Bash(npx prisma:*)",
-      "Bash(dir \"C:\\Users\\USER\\Desktop\\projects\\attendance-app\" \")"
+      "Bash(git merge:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(ls:*)",
+      "Bash(curl:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

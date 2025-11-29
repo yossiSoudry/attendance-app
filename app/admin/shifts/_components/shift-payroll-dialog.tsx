@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { DialogIcon } from "@/components/ui/dialog-icon";
 
 import {
   calculateShiftPayDetails,
@@ -70,6 +71,9 @@ export function ShiftPayrollDialog({
       <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
+          <DialogIcon variant="success">
+            <Calculator className="h-5 w-5" />
+          </DialogIcon>
           <DialogTitle>פירוט שכר - {employeeName}</DialogTitle>
           <DialogDescription>
             חישוב שכר למשמרת כולל שעות נוספות ובונוסים

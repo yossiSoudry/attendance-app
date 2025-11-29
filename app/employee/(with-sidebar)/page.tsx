@@ -1,16 +1,14 @@
-// app/employee/page.tsx
+// app/employee/(with-sidebar)/page.tsx
 import { ShiftDurationWidget } from "@/components/shift-duration-widget";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
-import type { ShiftStatus } from "@/types/prisma";
 import { History } from "lucide-react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { ClockInButton } from "./_components/clock-in-button";
-import { ClockOutButton } from "./_components/clock-out-button";
-import { EmployeePayrollDialog } from "./_components/employee-payroll-dialog";
-import { MyPendingShifts } from "./_components/my-pending-shifts";
-import { RetroShiftFormDialog } from "./_components/retro-shift-form-dialog";
+import { ClockInButton } from "../_components/clock-in-button";
+import { ClockOutButton } from "../_components/clock-out-button";
+import { MyPendingShifts } from "../_components/my-pending-shifts";
+import { RetroShiftFormDialog } from "../_components/retro-shift-form-dialog";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +25,6 @@ export default async function EmployeeHomePage() {
   });
 
   if (!employee) {
-    cookieStore.set("employeeId", "", { maxAge: 0, path: "/" });
     redirect("/employee/login");
   }
 
@@ -131,19 +128,10 @@ export default async function EmployeeHomePage() {
       : null;
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-      {/* כרטיסיה עליונה - רוחב מלא */}
-      <section className="rounded-3xl border-2 bg-card p-6 shadow-md dark:shadow-secondary/50">
-        <p className="text-xs text-muted-foreground">שלום,</p>
-        <h1 className="mt-1 text-xl font-semibold text-foreground">
-          {employee.fullName}
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          כאן אתה יכול לדווח על כניסה ויציאה מהמשמרת, ולראות מידע עדכני על
-          הסטטוס שלך.
-        </p>
-
-        <div className="mt-5 flex items-center gap-3">
+    <div className="flex w-full flex-col gap-6">
+      {/* Status Card */}
+      <section className="rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="flex items-center gap-3">
           <div className="relative flex h-3 w-3">
             <span
               className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-40 ${
@@ -156,7 +144,7 @@ export default async function EmployeeHomePage() {
               }`}
             />
           </div>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-sm text-muted-foreground">
             {inShift
               ? startedAt
                 ? `אתה כעת במשמרת, מאז ${startedAt}${
@@ -168,7 +156,7 @@ export default async function EmployeeHomePage() {
         </div>
       </section>
 
-      {/* גריד - ווידג'ט + כרטיסיית היסטוריה */}
+      {/* Widget + Actions */}
       <div className="flex flex-col gap-6 sm:flex-row">
         <ShiftDurationWidget startTime={openShift?.startTime} inShift={inShift}>
           {inShift ? (
@@ -178,7 +166,7 @@ export default async function EmployeeHomePage() {
           )}
         </ShiftDurationWidget>
 
-        <section className="flex flex-1 flex-col justify-center rounded-3xl border-2 bg-card p-6 shadow-md dark:shadow-secondary/50">
+        <section className="flex flex-1 flex-col justify-center rounded-2xl border bg-card p-6 shadow-sm">
           <div className="space-y-3 text-sm text-muted-foreground">
             {lastShiftSummary && (
               <p>
@@ -195,19 +183,6 @@ export default async function EmployeeHomePage() {
                   היסטוריית משמרות
                 </a>
               </Button>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" asChild>
-                  <a href="/employee/history" className="gap-2">
-                    <History className="h-4 w-4" />
-                    היסטוריית משמרות
-                  </a>
-                </Button>
-                <RetroShiftFormDialog
-                  employeeId={employee.id}
-                  workTypes={workTypes}
-                />
-                <EmployeePayrollDialog employeeId={employee.id} />
-              </div>
               <RetroShiftFormDialog
                 employeeId={employee.id}
                 workTypes={workTypes}
@@ -217,8 +192,8 @@ export default async function EmployeeHomePage() {
         </section>
       </div>
 
-      {/* משמרות ממתינות */}
-      <section className="rounded-3xl border-2 bg-card shadow-md dark:shadow-secondary/50">
+      {/* Pending Shifts */}
+      <section className="rounded-2xl border bg-card shadow-sm">
         <MyPendingShifts employeeId={employee.id} />
       </section>
     </div>

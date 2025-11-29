@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { DialogIcon } from "@/components/ui/dialog-icon";
 import { cn } from "@/lib/utils";
 
 import { clockIn } from "../_actions/clock-actions";
@@ -75,6 +76,9 @@ export function WorkTypeSelectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
+          <DialogIcon>
+            <Briefcase className="h-5 w-5" />
+          </DialogIcon>
           <DialogTitle>בחירת סוג עבודה</DialogTitle>
           <DialogDescription>
             בחר את סוג העבודה למשמרת זו

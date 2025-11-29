@@ -16,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { DialogIcon } from "@/components/ui/dialog-icon";
 
 import { deleteShift } from "../_actions/shift-actions";
 
@@ -53,6 +54,9 @@ export function DeleteShiftDialog({
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
+          <DialogIcon variant="destructive">
+            <Trash2 className="h-5 w-5" />
+          </DialogIcon>
           <AlertDialogTitle>מחיקת משמרת</AlertDialogTitle>
           <AlertDialogDescription>
             האם אתה בטוח שברצונך למחוק את המשמרת של{" "}

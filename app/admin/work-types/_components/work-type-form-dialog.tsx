@@ -2,7 +2,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Pencil, Plus } from "lucide-react";
+import { Briefcase, Loader2, Pencil, Plus } from "lucide-react";
 import * as React from "react";
 import { useForm } from "react-hook-form";
 
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { DialogIcon } from "@/components/ui/dialog-icon";
 
 import { Checkbox } from "@/components/animate-ui/components/radix/checkbox";
 import {
@@ -121,6 +122,9 @@ export function WorkTypeFormDialog({
       <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
+          <DialogIcon>
+            <Briefcase className="h-5 w-5" />
+          </DialogIcon>
           <DialogTitle>
             {mode === "create" ? "יצירת סוג עבודה חדש" : "עריכת סוג עבודה"}
           </DialogTitle>

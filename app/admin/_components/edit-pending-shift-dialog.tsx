@@ -42,6 +42,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { DialogIcon } from "@/components/ui/dialog-icon";
 import { cn } from "@/lib/utils";
 
 import {
@@ -178,6 +179,9 @@ export function EditPendingShiftDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
+          <DialogIcon>
+            <Pencil className="h-5 w-5" />
+          </DialogIcon>
           <DialogTitle>עריכת משמרת - {shift.employeeName}</DialogTitle>
           <DialogDescription>
             ערוך את פרטי המשמרת לפני האישור
