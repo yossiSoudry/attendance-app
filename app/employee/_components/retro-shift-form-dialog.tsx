@@ -178,7 +178,7 @@ export function RetroShiftFormDialog({
       <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center text-center gap-2">
             <Clock className="h-5 w-5" />
             דיווח משמרת רטרואקטיבי
           </DialogTitle>
