@@ -1,11 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run build:*)",
-      "Bash(npx next build:*)",
+      "Bash(npm install:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(copy \"C:\\Users\\USER\\Desktop\\projects\\attendance-app\\.env\" \"C:\\Users\\USER\\.claude-worktrees\\attendance-app\\unruffled-cohen\\.env\")",
+      "Bash(npx prisma db push)",
+      "Bash(npx prisma db push:*)",
+      "Bash(npx tsx:*)",
+      "Bash(npx auth:*)",
       "Bash(npx tsc:*)",
-      "Bash(npx prisma:*)",
-      "Bash(dir \"C:\\Users\\USER\\Desktop\\projects\\attendance-app\" \")"
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
