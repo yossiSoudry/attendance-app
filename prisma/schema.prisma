@@ -72,13 +72,72 @@ enum Platform {
   IOS
 }
 
+enum AdminRole {
+  OWNER      // בעל המערכת - יכול להוסיף מנהלים
+  ADMIN      // מנהל רגיל - רואה את כל העובדים
+  MANAGER    // מנהל מחלקה - רואה רק עובדים במחלקה שלו
+}
+
+enum AdminStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Department {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  admins    AdminUser[]
+  employees Employee[]
+}
+
 model AdminUser {
-  id        String   @id @default(uuid()) @db.Uuid
-  username  String   @unique
-  password  String   // hashed password
-  role      String   @default("ADMIN")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String      @id @default(uuid()) @db.Uuid
+  email         String      @unique
+  password      String?     // hashed password - null if using OAuth only
+  name          String
+  role          AdminRole   @default(MANAGER)
+  status        AdminStatus @default(ACTIVE)
+  departmentId  String?     @db.Uuid
+
+  // OAuth fields
+  googleId      String?     @unique
+  image         String?
+
+  // Invitation fields
+  invitedById   String?     @db.Uuid
+  invitedAt     DateTime?
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  department    Department?  @relation(fields: [departmentId], references: [id])
+  invitedBy     AdminUser?   @relation("AdminInvitations", fields: [invitedById], references: [id])
+  invitees      AdminUser[]  @relation("AdminInvitations")
+
+  // Shifts approved by this admin
+  approvedShifts Shift[]    @relation("ApprovedShifts")
+
+  @@index([email])
+  @@index([departmentId])
+}
+
+model AdminInvitation {
+  id          String    @id @default(uuid()) @db.Uuid
+  email       String    @unique
+  role        AdminRole @default(MANAGER)
+  departmentId String?  @db.Uuid
+  token       String    @unique
+  expiresAt   DateTime
+  invitedById String    @db.Uuid
+  createdAt   DateTime  @default(now())
+  usedAt      DateTime?
+
+  @@index([token])
+  @@index([email])
 }
 
 model Employee {
@@ -88,9 +147,11 @@ model Employee {
   status          EmployeeStatus      @default(ACTIVE)
   baseHourlyRate  Int                 // stored in agorot
   requireLocation Boolean             @default(false)
+  departmentId    String?             @db.Uuid
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
 
+  department       Department?        @relation(fields: [departmentId], references: [id])
   workRates        EmployeeWorkRate[]
   shifts           Shift[]
   timeEvents       TimeEvent[]
@@ -99,6 +160,8 @@ model Employee {
   documentRequests DocumentRequest[]
   documents        EmployeeDocument[]
   devices          Device[]
+
+  @@index([departmentId])
 }
 
 model WorkType {
@@ -144,8 +207,9 @@ model Shift {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  workType   WorkType? @relation(fields: [workTypeId], references: [id])
+  employee   Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  workType   WorkType?  @relation(fields: [workTypeId], references: [id])
+  approvedBy AdminUser? @relation("ApprovedShifts", fields: [approvedById], references: [id])
   timeEvents TimeEvent[]
 
   @@index([employeeId, startTime])
