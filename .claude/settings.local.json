@@ -3,7 +3,11 @@
     "allow": [
       "Bash(git merge:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(ls:*)",
+      "Bash(curl:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

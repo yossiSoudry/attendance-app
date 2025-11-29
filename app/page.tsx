@@ -1,10 +1,19 @@
 // app/page.tsx
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
+import { BlurFade } from "@/components/ui/blur-fade";
 import { ArrowLeft, Clock, Shield, Users } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
+    <main className="min-h-screen px-4 py-10 sm:px-6 lg:px-10">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
+        {/* Theme Toggle */}
+        <BlurFade delay={0.1} inView>
+          <div className="flex justify-end">
+            <AnimatedThemeToggler />
+          </div>
+        </BlurFade>
       {/* Hero Section */}
       <section className="relative overflow-hidden rounded-3xl border-2 bg-card p-8 shadow-md dark:shadow-secondary/50">
         <div
@@ -130,6 +139,7 @@ export default function Home() {
           ))}
         </div>
       </section>
-    </div>
+      </div>
+    </main>
   );
 }

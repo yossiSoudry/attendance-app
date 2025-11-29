@@ -1,4 +1,4 @@
-// app/employee/_components/employee-payroll-dialog.tsx
+// app/admin/payroll/_components/admin-payroll-content.tsx
 "use client";
 
 import {
@@ -9,20 +9,12 @@ import {
   ChevronRight,
   Clock,
   Loader2,
+  User,
 } from "lucide-react";
 import * as React from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { DialogIcon } from "@/components/ui/dialog-icon";
 import {
   Select,
   SelectContent,
@@ -30,7 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Collapsible,
   CollapsibleContent,
@@ -38,26 +29,25 @@ import {
 } from "@/components/ui/collapsible";
 
 import {
-  getEmployeeMonthlyPayroll,
-  getEmployeeAvailableMonths,
-  type EmployeePayrollSummary,
-  type EmployeeShiftPayroll,
-} from "../_actions/payroll-actions";
+  getAdminMonthlyPayroll,
+  getAdminAvailableMonths,
+  type AdminPayrollSummary,
+  type AdminShiftPayroll,
+} from "../_actions/admin-payroll-actions";
 
 // ========================================
 // Types
 // ========================================
 
-type EmployeePayrollDialogProps = {
-  employeeId: string;
-  trigger?: React.ReactNode;
+type AdminPayrollContentProps = {
+  employees: { id: string; fullName: string }[];
 };
 
 // ========================================
 // Shift Row Component
 // ========================================
 
-function ShiftRow({ shift }: { shift: EmployeeShiftPayroll }) {
+function ShiftRow({ shift }: { shift: AdminShiftPayroll }) {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const hasOvertime =
@@ -209,14 +199,22 @@ function ShiftRow({ shift }: { shift: EmployeeShiftPayroll }) {
 
 function SummaryCard({
   summary,
+  employeeName,
 }: {
-  summary: EmployeePayrollSummary["summary"];
+  summary: AdminPayrollSummary["summary"];
+  employeeName: string;
 }) {
   return (
     <div className="rounded-xl border-2 border-emerald-500/30 bg-emerald-500/5 p-4">
-      <h3 className="mb-3 font-semibold text-emerald-700 dark:text-emerald-400">
-        סיכום חודשי
-      </h3>
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="font-semibold text-emerald-700 dark:text-emerald-400">
+          סיכום חודשי
+        </h3>
+        <Badge variant="outline" className="gap-1">
+          <User className="h-3 w-3" />
+          {employeeName}
+        </Badge>
+      </div>
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
         <div className="flex justify-between">
@@ -308,11 +306,10 @@ function SummaryCard({
 // Main Component
 // ========================================
 
-export function EmployeePayrollDialog({
-  employeeId,
-  trigger,
-}: EmployeePayrollDialogProps) {
-  const [open, setOpen] = React.useState(false);
+export function AdminPayrollContent({ employees }: AdminPayrollContentProps) {
+  const [selectedEmployeeId, setSelectedEmployeeId] = React.useState<
+    string | null
+  >(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [availableMonths, setAvailableMonths] = React.useState<
     { label: string; year: number; month: number }[]
@@ -322,49 +319,57 @@ export function EmployeePayrollDialog({
     month: number;
   } | null>(null);
   const [payrollData, setPayrollData] =
-    React.useState<EmployeePayrollSummary | null>(null);
+    React.useState<AdminPayrollSummary | null>(null);
 
-  // Define callbacks before useEffects
-  const loadAvailableMonths = React.useCallback(async () => {
-    setIsLoading(true);
-    const months = await getEmployeeAvailableMonths(employeeId);
-    setAvailableMonths(months);
-
-    // Select current or most recent month
-    if (months.length > 0) {
-      const now = new Date();
-      const currentMonth = months.find(
-        (m) => m.year === now.getFullYear() && m.month === now.getMonth() + 1
-      );
-      setSelectedMonth(currentMonth ?? months[0]);
-    }
-
-    setIsLoading(false);
-  }, [employeeId]);
-
-  const loadPayroll = React.useCallback(
-    async (year: number, month: number) => {
-      setIsLoading(true);
-      const data = await getEmployeeMonthlyPayroll(employeeId, year, month);
-      setPayrollData(data);
-      setIsLoading(false);
-    },
-    [employeeId]
-  );
-
-  // Load available months on open
+  // Load available months when employee changes
   React.useEffect(() => {
-    if (open) {
-      loadAvailableMonths();
+    if (selectedEmployeeId) {
+      async function loadMonths() {
+        setIsLoading(true);
+        setPayrollData(null);
+        const months = await getAdminAvailableMonths(selectedEmployeeId!);
+        setAvailableMonths(months);
+
+        // Select current or most recent month
+        if (months.length > 0) {
+          const now = new Date();
+          const currentMonth = months.find(
+            (m) =>
+              m.year === now.getFullYear() && m.month === now.getMonth() + 1
+          );
+          setSelectedMonth(currentMonth ?? months[0]);
+        } else {
+          setSelectedMonth(null);
+        }
+
+        setIsLoading(false);
+      }
+
+      loadMonths();
+    } else {
+      setAvailableMonths([]);
+      setSelectedMonth(null);
+      setPayrollData(null);
     }
-  }, [open, loadAvailableMonths]);
+  }, [selectedEmployeeId]);
 
   // Load payroll when month changes
   React.useEffect(() => {
-    if (selectedMonth) {
-      loadPayroll(selectedMonth.year, selectedMonth.month);
+    if (selectedEmployeeId && selectedMonth) {
+      async function loadPayroll() {
+        setIsLoading(true);
+        const data = await getAdminMonthlyPayroll(
+          selectedEmployeeId!,
+          selectedMonth!.year,
+          selectedMonth!.month
+        );
+        setPayrollData(data);
+        setIsLoading(false);
+      }
+
+      loadPayroll();
     }
-  }, [selectedMonth, loadPayroll]);
+  }, [selectedMonth, selectedEmployeeId]);
 
   function navigateMonth(direction: "prev" | "next") {
     if (!selectedMonth || availableMonths.length === 0) return;
@@ -389,112 +394,153 @@ export function EmployeePayrollDialog({
   const canGoPrev = currentIndex < availableMonths.length - 1;
   const canGoNext = currentIndex > 0;
 
-  const defaultTrigger = (
-    <Button variant="outline" size="sm" className="gap-2">
-      <Calculator className="h-4 w-4" />
-      חישוב שכר
-    </Button>
-  );
+  if (employees.length === 0) {
+    return (
+      <section className="rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="flex flex-col items-center justify-center py-10 text-center">
+          <User className="mb-2 h-12 w-12 text-muted-foreground/50" />
+          <p className="text-muted-foreground">אין עובדים פעילים במערכת</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
-      <DialogContent className="flex h-[85vh] max-h-[700px] flex-col sm:max-w-[550px]">
-        <DialogHeader>
-          <DialogIcon variant="success">
-            <Calculator className="h-5 w-5" />
-          </DialogIcon>
-          <DialogTitle>חישוב שכר חודשי</DialogTitle>
-          <DialogDescription>
-            פירוט שכר לפי חוק שעות עבודה ומנוחה
-          </DialogDescription>
-        </DialogHeader>
-
-        {/* Month Selector */}
-        <div className="flex items-center justify-between gap-2 border-b pb-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigateMonth("prev")}
-            disabled={!canGoPrev || isLoading}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-
+    <>
+      {/* Employee & Month Selector */}
+      <section className="rounded-2xl border bg-card p-4 shadow-sm">
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          {/* Employee Selector */}
           <Select
-            value={
-              selectedMonth
-                ? `${selectedMonth.year}-${selectedMonth.month}`
-                : ""
-            }
-            onValueChange={(value) => {
-              const [year, month] = value.split("-").map(Number);
-              setSelectedMonth({ year, month });
-            }}
-            disabled={isLoading || availableMonths.length === 0}
+            value={selectedEmployeeId ?? ""}
+            onValueChange={(value) => setSelectedEmployeeId(value)}
           >
-            <SelectTrigger className="w-[180px]">
-              <Calendar className="ml-2 h-4 w-4" />
-              <SelectValue placeholder="בחר חודש" />
+            <SelectTrigger className="w-[200px]">
+              <User className="ml-2 h-4 w-4" />
+              <SelectValue placeholder="בחר עובד" />
             </SelectTrigger>
             <SelectContent>
-              {availableMonths.map((m) => (
-                <SelectItem
-                  key={`${m.year}-${m.month}`}
-                  value={`${m.year}-${m.month}`}
-                >
-                  {m.label}
+              {employees.map((emp) => (
+                <SelectItem key={emp.id} value={emp.id}>
+                  {emp.fullName}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigateMonth("next")}
-            disabled={!canGoNext || isLoading}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-        </div>
+          {selectedEmployeeId && availableMonths.length > 0 && (
+            <>
+              <div className="h-6 w-px bg-border" />
 
-        {/* Content */}
-        {isLoading ? (
-          <div className="flex flex-1 items-center justify-center">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigateMonth("prev")}
+                  disabled={!canGoPrev || isLoading}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+
+                <Select
+                  value={
+                    selectedMonth
+                      ? `${selectedMonth.year}-${selectedMonth.month}`
+                      : ""
+                  }
+                  onValueChange={(value) => {
+                    const [year, month] = value.split("-").map(Number);
+                    setSelectedMonth({ year, month });
+                  }}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <Calendar className="ml-2 h-4 w-4" />
+                    <SelectValue placeholder="בחר חודש" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableMonths.map((m) => (
+                      <SelectItem
+                        key={`${m.year}-${m.month}`}
+                        value={`${m.year}-${m.month}`}
+                      >
+                        {m.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigateMonth("next")}
+                  disabled={!canGoNext || isLoading}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Content */}
+      {!selectedEmployeeId ? (
+        <section className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <User className="mb-2 h-12 w-12 text-muted-foreground/50" />
+            <p className="text-muted-foreground">בחר עובד לצפייה בחישוב השכר</p>
+          </div>
+        </section>
+      ) : isLoading ? (
+        <section className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="flex items-center justify-center py-10">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        ) : !payrollData || payrollData.shifts.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center text-center">
+        </section>
+      ) : availableMonths.length === 0 ? (
+        <section className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <Calendar className="mb-2 h-12 w-12 text-muted-foreground/50" />
+            <p className="text-muted-foreground">אין משמרות סגורות לעובד זה</p>
+          </div>
+        </section>
+      ) : !payrollData || payrollData.shifts.length === 0 ? (
+        <section className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="flex flex-col items-center justify-center py-10 text-center">
             <Calendar className="mb-2 h-12 w-12 text-muted-foreground/50" />
             <p className="text-muted-foreground">אין משמרות בחודש זה</p>
           </div>
-        ) : (
-          <>
-            {/* Summary */}
-            <SummaryCard summary={payrollData.summary} />
+        </section>
+      ) : (
+        <>
+          {/* Summary Card */}
+          <section className="rounded-2xl border bg-card p-4 shadow-sm">
+            <SummaryCard
+              summary={payrollData.summary}
+              employeeName={payrollData.employeeName}
+            />
+          </section>
 
-            {/* Shifts List */}
-            <div className="mt-3 flex-1 overflow-hidden">
-              <h4 className="mb-2 text-sm font-medium text-muted-foreground">
-                פירוט משמרות ({payrollData.shifts.length})
-              </h4>
-              <ScrollArea className="h-full max-h-[280px]">
-                <div className="space-y-2 pl-1 pr-3">
-                  {payrollData.shifts.map((shift) => (
-                    <ShiftRow key={shift.id} shift={shift} />
-                  ))}
-                </div>
-              </ScrollArea>
+          {/* Shifts List */}
+          <section className="rounded-2xl border bg-card p-4 shadow-sm">
+            <h4 className="mb-3 flex items-center gap-2 font-medium">
+              <Calculator className="h-4 w-4" />
+              פירוט משמרות ({payrollData.shifts.length})
+            </h4>
+            <div className="space-y-2">
+              {payrollData.shifts.map((shift) => (
+                <ShiftRow key={shift.id} shift={shift} />
+              ))}
             </div>
-          </>
-        )}
+          </section>
 
-        {/* Legal Note */}
-        <div className="border-t pt-3 text-[11px] text-muted-foreground">
-          * החישוב לפי חוק שעות עבודה ומנוחה. ייתכנו הפרשים קטנים בעיגול.
-        </div>
-      </DialogContent>
-    </Dialog>
+          {/* Legal Note */}
+          <div className="text-center text-[11px] text-muted-foreground">
+            * החישוב לפי חוק שעות עבודה ומנוחה. ייתכנו הפרשים קטנים בעיגול.
+          </div>
+        </>
+      )}
+    </>
   );
 }
