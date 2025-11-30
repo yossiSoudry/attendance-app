@@ -95,7 +95,7 @@ export default async function AdminPage() {
           <div className="flex flex-col items-center justify-center py-10 text-sm text-muted-foreground">
             <p>עדיין אין עובדים במערכת.</p>
             <p className="mt-1 text-xs text-muted-foreground/70">
-              בקרוב נבנה כאן מסך ליצירת עובד חדש וניהול עובדים.
+              לחץ על "הוסף עובד" כדי להוסיף עובד חדש.
             </p>
           </div>
         ) : (
