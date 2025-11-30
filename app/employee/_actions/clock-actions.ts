@@ -156,12 +156,36 @@ export async function clockOut(): Promise<ClockInResult> {
 }
 
 export async function getWorkTypesForEmployee() {
+  const cookieStore = await cookies();
+  const employeeId = cookieStore.get("employeeId")?.value;
+
+  if (!employeeId) {
+    return [];
+  }
+
+  // Get work types that are either:
+  // 1. Default work type (available to all employees)
+  // 2. Assigned to this employee via EmployeeWorkRate
   const workTypes = await prisma.workType.findMany({
+    where: {
+      OR: [
+        { isDefault: true },
+        {
+          employeeRates: {
+            some: {
+              employeeId: employeeId,
+            },
+          },
+        },
+      ],
+    },
     select: {
       id: true,
       name: true,
       description: true,
       isDefault: true,
+      rateType: true,
+      rateValue: true,
     },
     orderBy: [
       { isDefault: "desc" }, // Default first

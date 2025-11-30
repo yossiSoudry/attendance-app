@@ -15,6 +15,7 @@ import { DeleteEmployeeDialog } from "./delete-employee-dialog";
 import { EmployeeBonusesDialog } from "./employee-bonuses-dialog";
 import { EmployeeFormDialog } from "./employee-form-dialog";
 import { EmployeeRatesDialog } from "./employee-rates-dialog";
+import type { WorkTypeRateType } from "@prisma/client";
 
 export type EmployeeTableRow = {
   id: string;
@@ -25,9 +26,17 @@ export type EmployeeTableRow = {
   createdAt: string;
 };
 
+type WorkTypeForAssignment = {
+  id: string;
+  name: string;
+  isDefault: boolean;
+  rateType: WorkTypeRateType;
+  rateValue: number;
+};
+
 type EmployeesDataTableProps = {
   data: EmployeeTableRow[];
-  workTypes: { id: string; name: string }[];
+  workTypes: WorkTypeForAssignment[];
 };
 
 export function EmployeesDataTable({

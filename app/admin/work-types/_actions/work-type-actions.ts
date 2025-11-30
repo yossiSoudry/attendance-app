@@ -28,7 +28,7 @@ export async function createWorkType(
     };
   }
 
-  const { name, description, isDefault } = parsed.data;
+  const { name, description, isDefault, rateType, rateValue } = parsed.data;
 
   // אם זה ברירת מחדל חדשה, בטל את הקודמת
   if (isDefault) {
@@ -43,6 +43,8 @@ export async function createWorkType(
       name,
       description: description || null,
       isDefault,
+      rateType,
+      rateValue,
     },
   });
 
@@ -57,6 +59,8 @@ export async function createWorkType(
         name,
         description: description || null,
         isDefault,
+        rateType,
+        rateValue,
       },
     },
   });
@@ -83,7 +87,7 @@ export async function updateWorkType(
     };
   }
 
-  const { name, description, isDefault } = parsed.data;
+  const { name, description, isDefault, rateType, rateValue } = parsed.data;
 
   const existing = await prisma.workType.findUnique({
     where: { id },
@@ -100,6 +104,8 @@ export async function updateWorkType(
     name: existing.name,
     description: existing.description,
     isDefault: existing.isDefault,
+    rateType: existing.rateType,
+    rateValue: existing.rateValue,
   };
 
   // אם זה ברירת מחדל חדשה, בטל את הקודמת
@@ -116,6 +122,8 @@ export async function updateWorkType(
       name,
       description: description || null,
       isDefault,
+      rateType,
+      rateValue,
     },
   });
 
@@ -131,6 +139,8 @@ export async function updateWorkType(
         name,
         description: description || null,
         isDefault,
+        rateType,
+        rateValue,
       },
     },
   });

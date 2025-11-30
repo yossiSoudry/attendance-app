@@ -2,7 +2,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { Briefcase, CalendarIcon, Check, Text, Users } from "lucide-react";
+import { Briefcase, CalendarIcon, Check, Text, Users, Coins } from "lucide-react";
 import * as React from "react";
 
 import { DataTable } from "@/components/data-table/data-table";
@@ -13,16 +13,39 @@ import { useDataTable } from "@/hooks/use-data-table";
 
 import { DeleteWorkTypeDialog } from "./delete-work-type-dialog";
 import { WorkTypeFormDialog } from "./work-type-form-dialog";
+import type { WorkTypeRateType } from "@prisma/client";
 
 export type WorkTypeTableRow = {
   id: string;
   name: string;
   description: string | null;
   isDefault: boolean;
+  rateType: WorkTypeRateType;
+  rateValue: number;
   employeesCount: number;
   shiftsCount: number;
   createdAt: string;
 };
+
+const rateTypeLabels: Record<WorkTypeRateType, string> = {
+  BASE_RATE: "שכר בסיסי",
+  FIXED: "קבוע",
+  BONUS_PERCENT: "תוספת %",
+  BONUS_FIXED: "תוספת ₪",
+};
+
+function formatRateDisplay(rateType: WorkTypeRateType, rateValue: number): string {
+  switch (rateType) {
+    case "BASE_RATE":
+      return "שכר בסיסי";
+    case "FIXED":
+      return `${(rateValue / 100).toFixed(0)}₪/שעה`;
+    case "BONUS_PERCENT":
+      return `+${(rateValue / 100).toFixed(0)}%`;
+    case "BONUS_FIXED":
+      return `+${(rateValue / 100).toFixed(0)}₪/שעה`;
+  }
+}
 
 type WorkTypesDataTableProps = {
   data: WorkTypeTableRow[];
@@ -69,6 +92,28 @@ export function WorkTypesDataTable({ data }: WorkTypesDataTableProps) {
             <span className="text-sm text-muted-foreground">
               {description || "—"}
             </span>
+          );
+        },
+        enableColumnFilter: false,
+      },
+      {
+        id: "rateType",
+        accessorKey: "rateType",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title="תעריף"
+            label="תעריף"
+          />
+        ),
+        cell: ({ row }) => {
+          const rateType = row.original.rateType;
+          const rateValue = row.original.rateValue;
+          return (
+            <div className="flex items-center gap-1 text-sm">
+              <Coins className="h-3 w-3 opacity-60" />
+              <span>{formatRateDisplay(rateType, rateValue)}</span>
+            </div>
           );
         },
         enableColumnFilter: false,
@@ -155,6 +200,8 @@ export function WorkTypesDataTable({ data }: WorkTypesDataTableProps) {
                   name: workType.name,
                   description: workType.description,
                   isDefault: workType.isDefault,
+                  rateType: workType.rateType,
+                  rateValue: workType.rateValue,
                 }}
               />
               <DeleteWorkTypeDialog

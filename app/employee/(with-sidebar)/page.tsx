@@ -1,14 +1,13 @@
 // app/employee/(with-sidebar)/page.tsx
 import { ShiftDurationWidget } from "@/components/shift-duration-widget";
-import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
-import { History } from "lucide-react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ClockInButton } from "../_components/clock-in-button";
 import { ClockOutButton } from "../_components/clock-out-button";
 import { MyPendingShifts } from "../_components/my-pending-shifts";
 import { RetroShiftFormDialog } from "../_components/retro-shift-form-dialog";
+import { WorkTypeSelector } from "../_components/work-type-selector";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +49,14 @@ export default async function EmployeeHomePage() {
   });
 
   // Fetch work types for clock-in selection
+  // Only show: 1. Default work types (available to all), 2. Work types assigned to this employee
   const workTypes = await prisma.workType.findMany({
+    where: {
+      OR: [
+        { isDefault: true },
+        { employeeRates: { some: { employeeId: employee.id } } },
+      ],
+    },
     select: {
       id: true,
       name: true,
@@ -167,22 +173,22 @@ export default async function EmployeeHomePage() {
         </ShiftDurationWidget>
 
         <section className="flex flex-1 flex-col justify-center rounded-2xl border bg-card p-6 shadow-sm">
-          <div className="space-y-3 text-sm text-muted-foreground">
+          <div className="space-y-4">
+            {/* Work type selector - only when not in shift */}
+            {!inShift && <WorkTypeSelector workTypes={workTypes} />}
+
+            {/* Last shift summary */}
             {lastShiftSummary && (
-              <p>
+              <p className="text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">
                   המשמרת האחרונה:
                 </span>{" "}
                 {lastShiftSummary}
               </p>
             )}
+
+            {/* Retro shift button */}
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" asChild>
-                <a href="/employee/history" className="gap-2">
-                  <History className="h-4 w-4" />
-                  היסטוריית משמרות
-                </a>
-              </Button>
               <RetroShiftFormDialog
                 employeeId={employee.id}
                 workTypes={workTypes}

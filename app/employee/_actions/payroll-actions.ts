@@ -13,6 +13,10 @@ import {
   determineShiftType,
   DEFAULT_WORK_RULES,
 } from "@/lib/calculations/overtime";
+import {
+  getHolidaysForPeriod,
+  getHolidayInfoFromMap,
+} from "@/lib/calendar-utils";
 
 // ========================================
 // Types
@@ -145,8 +149,11 @@ export async function getEmployeeMonthlyPayroll(
 
   const bonuses = await getEmployeeBonuses(employeeId);
 
+  // טעינת כל החגים לתקופה מראש (יעיל יותר מקריאה לDB לכל משמרת)
+  const holidaysMap = await getHolidaysForPeriod(startDate, endDate);
+
   const results: EmployeeShiftPayroll[] = [];
-  
+
   // Summary totals
   let totalMinutes = 0;
   let regularMinutes = 0;
@@ -163,11 +170,14 @@ export async function getEmployeeMonthlyPayroll(
     if (!shift.endTime) continue;
 
     const hourlyRate = await getHourlyRate(employeeId, shift.workTypeId);
-    
+
+    // בדיקה האם יום חג/מנוחה מלוח השנה
+    const holidayInfo = getHolidayInfoFromMap(holidaysMap, shift.startTime);
+
     const shiftType = determineShiftType(
       shift.startTime,
-      false, // isShortDay
-      false  // isHoliday - TODO: check from calendar
+      holidayInfo.isShortDay, // יום קצר (ערב חג)
+      holidayInfo.isRestDay   // יום חג/מנוחה
     );
 
     const payroll = calculateShiftPayroll({

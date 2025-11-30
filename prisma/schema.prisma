@@ -67,6 +67,13 @@ enum UploadedBy {
   MANAGER
 }
 
+enum WorkTypeRateType {
+  BASE_RATE       // שימוש בשכר הבסיסי של העובד
+  FIXED           // תעריף קבוע לשעה
+  BONUS_PERCENT   // תוספת אחוזים על השכר הבסיסי
+  BONUS_FIXED     // תוספת קבועה לשעה
+}
+
 enum Platform {
   ANDROID
   IOS
@@ -169,6 +176,11 @@ model WorkType {
   name        String
   description String?
   isDefault   Boolean            @default(false)
+
+  // Rate configuration
+  rateType    WorkTypeRateType   @default(BASE_RATE)
+  rateValue   Int                @default(0)  // agorot for FIXED/BONUS_FIXED, percent*100 for BONUS_PERCENT (e.g., 2500 = 25%)
+
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 

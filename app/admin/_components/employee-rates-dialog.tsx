@@ -1,7 +1,7 @@
 // app/admin/_components/employee-rates-dialog.tsx
 "use client";
 
-import { Banknote, Loader2, Trash2 } from "lucide-react";
+import { Banknote, Loader2 } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
@@ -14,20 +14,38 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DialogIcon } from "@/components/ui/dialog-icon";
+import { Checkbox } from "@/components/animate-ui/components/radix/checkbox";
+import { Badge } from "@/components/ui/badge";
 
 import {
   getEmployeeRates,
   saveEmployeeRates,
   type EmployeeRateInput,
 } from "../_actions/employee-work-rate-actions";
+import type { WorkTypeRateType } from "@prisma/client";
 
 type WorkType = {
   id: string;
   name: string;
+  isDefault: boolean;
+  rateType: WorkTypeRateType;
+  rateValue: number;
 };
+
+function formatRateDisplay(rateType: WorkTypeRateType, rateValue: number): string {
+  switch (rateType) {
+    case "BASE_RATE":
+      return "שכר בסיסי";
+    case "FIXED":
+      return `${(rateValue / 100).toFixed(0)}₪/שעה`;
+    case "BONUS_PERCENT":
+      return `+${(rateValue / 100).toFixed(0)}%`;
+    case "BONUS_FIXED":
+      return `+${(rateValue / 100).toFixed(0)}₪/שעה`;
+  }
+}
 
 type EmployeeRatesDialogProps = {
   employeeId: string;
@@ -37,10 +55,13 @@ type EmployeeRatesDialogProps = {
   trigger?: React.ReactNode;
 };
 
-type RateState = {
+type AssignmentState = {
   workTypeId: string;
   workTypeName: string;
-  hourlyRate: number; // in shekels
+  isDefault: boolean;
+  rateType: WorkTypeRateType;
+  rateValue: number;
+  isAssigned: boolean;
 };
 
 export function EmployeeRatesDialog({
@@ -53,7 +74,7 @@ export function EmployeeRatesDialog({
   const [open, setOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
-  const [rates, setRates] = React.useState<RateState[]>([]);
+  const [assignments, setAssignments] = React.useState<AssignmentState[]>([]);
   const [error, setError] = React.useState<string | null>(null);
 
   // Load existing rates when dialog opens
@@ -64,22 +85,27 @@ export function EmployeeRatesDialog({
 
       getEmployeeRates(employeeId)
         .then((existingRates) => {
-          // Create a map of existing rates
-          const existingMap = new Map(
-            existingRates.map((r: { workTypeId: string; hourlyRate: number }) => [r.workTypeId, r.hourlyRate])
+          // Create a set of assigned work type IDs
+          const assignedSet = new Set(
+            existingRates.map((r: { workTypeId: string }) => r.workTypeId)
           );
 
-          // Initialize rates for all work types
-          const initialRates: RateState[] = workTypes.map((wt) => ({
-            workTypeId: wt.id,
-            workTypeName: wt.name,
-            hourlyRate: (existingMap.get(wt.id) ?? 0) as number,
-          }));
+          // Initialize assignments for all non-default work types
+          const initialAssignments: AssignmentState[] = workTypes
+            .filter((wt) => !wt.isDefault) // Don't show default, it's always available
+            .map((wt) => ({
+              workTypeId: wt.id,
+              workTypeName: wt.name,
+              isDefault: wt.isDefault,
+              rateType: wt.rateType,
+              rateValue: wt.rateValue,
+              isAssigned: assignedSet.has(wt.id),
+            }));
 
-          setRates(initialRates);
+          setAssignments(initialAssignments);
         })
         .catch(() => {
-          setError("שגיאה בטעינת התעריפים");
+          setError("שגיאה בטעינת ההקצאות");
         })
         .finally(() => {
           setIsLoading(false);
@@ -87,19 +113,10 @@ export function EmployeeRatesDialog({
     }
   }, [open, employeeId, workTypes]);
 
-  function handleRateChange(workTypeId: string, value: string) {
-    const numValue = parseFloat(value) || 0;
-    setRates((prev) =>
-      prev.map((r) =>
-        r.workTypeId === workTypeId ? { ...r, hourlyRate: numValue } : r
-      )
-    );
-  }
-
-  function handleClearRate(workTypeId: string) {
-    setRates((prev) =>
-      prev.map((r) =>
-        r.workTypeId === workTypeId ? { ...r, hourlyRate: 0 } : r
+  function handleAssignmentChange(workTypeId: string, isAssigned: boolean) {
+    setAssignments((prev) =>
+      prev.map((a) =>
+        a.workTypeId === workTypeId ? { ...a, isAssigned } : a
       )
     );
   }
@@ -108,11 +125,13 @@ export function EmployeeRatesDialog({
     setIsSaving(true);
     setError(null);
 
-    const ratesToSave: EmployeeRateInput[] = rates
-      .filter((r) => r.hourlyRate > 0)
-      .map((r) => ({
-        workTypeId: r.workTypeId,
-        hourlyRate: r.hourlyRate,
+    // Save assigned work types with a placeholder rate (1 agorot)
+    // The actual rate comes from WorkType.rateType/rateValue
+    const ratesToSave: EmployeeRateInput[] = assignments
+      .filter((a) => a.isAssigned)
+      .map((a) => ({
+        workTypeId: a.workTypeId,
+        hourlyRate: 1, // Placeholder - actual rate is from WorkType
       }));
 
     const result = await saveEmployeeRates(employeeId, ratesToSave);
@@ -127,9 +146,10 @@ export function EmployeeRatesDialog({
   }
 
   const baseRateShekel = baseHourlyRate ? baseHourlyRate / 100 : 0;
+  const nonDefaultWorkTypes = workTypes.filter((wt) => !wt.isDefault);
 
   const defaultTrigger = (
-    <Button variant="ghost" size="icon" title="ניהול תעריפים">
+    <Button variant="ghost" size="icon" title="הקצאת סוגי עבודה">
       <Banknote className="h-4 w-4" />
     </Button>
   );
@@ -142,9 +162,9 @@ export function EmployeeRatesDialog({
           <DialogIcon>
             <Banknote className="h-5 w-5" />
           </DialogIcon>
-          <DialogTitle>ניהול תעריפים - {employeeName}</DialogTitle>
+          <DialogTitle>הקצאת סוגי עבודה - {employeeName}</DialogTitle>
           <DialogDescription>
-            הגדר שכר לשעה עבור כל סוג עבודה. השאר ריק או 0 לשימוש בשכר הבסיס.
+            בחר אילו סוגי עבודה מיוחדים יהיו זמינים לעובד זה. סוג עבודה ברירת מחדל זמין לכולם.
           </DialogDescription>
         </DialogHeader>
 
@@ -153,11 +173,11 @@ export function EmployeeRatesDialog({
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">שכר בסיס לשעה:</span>
             <span className="font-medium">
-              {baseRateShekel > 0 ? `₪${baseRateShekel.toFixed(2)}` : "לא הוגדר"}
+              {baseRateShekel > 0 ? `₪${baseRateShekel.toFixed(0)}` : "לא הוגדר"}
             </span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            שכר הבסיס ישמש כשלא מוגדר תעריף ספציפי לסוג עבודה
+            התעריפים של סוגי העבודה מחושבים ביחס לשכר הבסיס
           </p>
         </div>
 
@@ -165,9 +185,9 @@ export function EmployeeRatesDialog({
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        ) : workTypes.length === 0 ? (
+        ) : nonDefaultWorkTypes.length === 0 ? (
           <div className="py-8 text-center text-sm text-muted-foreground">
-            אין סוגי עבודה במערכת.
+            אין סוגי עבודה מיוחדים במערכת.
             <br />
             <span className="text-xs">
               הוסף סוגי עבודה בעמוד &quot;סוגי עבודה&quot; תחילה.
@@ -175,49 +195,30 @@ export function EmployeeRatesDialog({
           </div>
         ) : (
           <div className="space-y-3">
-            {rates.map((rate) => (
+            {assignments.map((assignment) => (
               <div
-                key={rate.workTypeId}
+                key={assignment.workTypeId}
                 className="flex items-center gap-3 rounded-lg border p-3"
               >
+                <Checkbox
+                  id={`assign-${assignment.workTypeId}`}
+                  checked={assignment.isAssigned}
+                  onCheckedChange={(checked) =>
+                    handleAssignmentChange(assignment.workTypeId, !!checked)
+                  }
+                />
                 <div className="flex-1">
                   <Label
-                    htmlFor={`rate-${rate.workTypeId}`}
-                    className="text-sm font-medium"
+                    htmlFor={`assign-${assignment.workTypeId}`}
+                    className="text-sm font-medium cursor-pointer"
                   >
-                    {rate.workTypeName}
+                    {assignment.workTypeName}
                   </Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                      ₪
-                    </span>
-                    <Input
-                      id={`rate-${rate.workTypeId}`}
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="1000"
-                      placeholder={baseRateShekel > 0 ? baseRateShekel.toFixed(2) : "0.00"}
-                      value={rate.hourlyRate || ""}
-                      onChange={(e) =>
-                        handleRateChange(rate.workTypeId, e.target.value)
-                      }
-                      className="w-28 pr-7 text-left"
-                      dir="ltr"
-                    />
+                  <div className="mt-1">
+                    <Badge variant="secondary" className="text-xs">
+                      {formatRateDisplay(assignment.rateType, assignment.rateValue)}
+                    </Badge>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => handleClearRate(rate.workTypeId)}
-                    disabled={rate.hourlyRate === 0}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
                 </div>
               </div>
             ))}
@@ -240,10 +241,10 @@ export function EmployeeRatesDialog({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={isSaving || isLoading || workTypes.length === 0}
+            disabled={isSaving || isLoading}
           >
             {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-            שמור תעריפים
+            שמור הקצאות
           </Button>
         </DialogFooter>
       </DialogContent>
