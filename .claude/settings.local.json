@@ -9,7 +9,9 @@
       "Bash(npx tsx:*)",
       "Bash(npx auth:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npx prisma db pull:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
