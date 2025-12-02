@@ -291,23 +291,51 @@ model EmployeeBonus {
   @@index([employeeId])
 }
 
+// Recurrence types for scheduled tasks
+enum RecurrenceType {
+  NONE          // One-time task (can be scheduled or immediate)
+  DAILY         // Every day
+  WEEKLY        // Specific day of week (value = 0-6, Sunday=0)
+  BIWEEKLY      // Every two weeks on specific day
+  MONTHLY_DATE  // Specific date of month (value = 1-31)
+  MONTHLY_DAY   // Specific day of specific week (value = weekday*10 + week, e.g., 21 = Monday of 2nd week)
+}
+
 model Task {
-  id                     String      @id @default(uuid()) @db.Uuid
-  employeeId             String      @db.Uuid
+  id                     String            @id @default(uuid()) @db.Uuid
+  employeeId             String            @db.Uuid
   title                  String
   description            String?
-  status                 TaskStatus  @default(OPEN)
-  createdBy              ActorType   @default(MANAGER)
+  status                 TaskStatus        @default(OPEN)
+  createdBy              ActorType         @default(MANAGER)
   dueDate                DateTime?
-  requiresDocumentUpload Boolean     @default(false)
+  requiresDocumentUpload Boolean           @default(false)
+  attachedDocumentId     String?           @db.Uuid
   employeeNote           String?
   managerNote            String?
-  createdAt              DateTime    @default(now())
+  createdAt              DateTime          @default(now())
   completedAt            DateTime?
 
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  // Scheduling fields
+  scheduledDate          DateTime?         // When the task becomes visible to employee
+  isVisible              Boolean           @default(true)  // False until scheduledDate arrives
+
+  // Recurrence fields (for template tasks)
+  recurrenceType         RecurrenceType    @default(NONE)
+  recurrenceValue        Int?              // Day of week (0-6), date of month (1-31), etc.
+  recurrenceEndDate      DateTime?         // When to stop creating new instances
+  isTemplate             Boolean           @default(false) // True if this is a recurring template
+  templateId             String?           @db.Uuid        // Links instance to its template
+  lastGeneratedDate      DateTime?         // Last date an instance was generated from this template
+
+  employee         Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  attachedDocument EmployeeDocument? @relation(fields: [attachedDocumentId], references: [id])
+  template         Task?             @relation("TaskTemplate", fields: [templateId], references: [id])
+  instances        Task[]            @relation("TaskTemplate")
 
   @@index([employeeId, status])
+  @@index([isTemplate, recurrenceType])
+  @@index([scheduledDate, isVisible])
 }
 
 model DocumentRequest {
@@ -336,8 +364,9 @@ model EmployeeDocument {
   uploadedBy UploadedBy
   createdAt  DateTime         @default(now())
 
-  employee Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   requests DocumentRequest[]
+  tasks    Task[]
 
   @@index([employeeId])
 }

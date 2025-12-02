@@ -18,10 +18,15 @@ export default async function EmployeeWithSidebarLayout({
     redirect("/employee/login");
   }
 
-  const employee = await prisma.employee.findUnique({
-    where: { id: employeeId },
-    select: { fullName: true },
-  });
+  const [employee, openTasksCount] = await Promise.all([
+    prisma.employee.findUnique({
+      where: { id: employeeId },
+      select: { fullName: true },
+    }),
+    prisma.task.count({
+      where: { employeeId, status: "OPEN", isVisible: true, isTemplate: false },
+    }),
+  ]);
 
   if (!employee) {
     redirect("/employee/login");
@@ -29,7 +34,7 @@ export default async function EmployeeWithSidebarLayout({
 
   return (
     <SidebarProvider>
-      <EmployeeSidebar employeeName={employee.fullName} />
+      <EmployeeSidebar employeeName={employee.fullName} openTasksCount={openTasksCount} />
       <SidebarInset>
         <AppNavbar
           breadcrumbs={[

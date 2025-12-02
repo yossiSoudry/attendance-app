@@ -7,6 +7,7 @@ import {
   CalendarDays,
   ChevronDown,
   ChevronsUpDown,
+  ClipboardList,
   Clock,
   Home,
   LogOut,
@@ -92,6 +93,11 @@ const navMain: NavItem[] = [
     title: "לוח שנה",
     url: "/admin/calendar",
     icon: CalendarDays,
+  },
+  {
+    title: "משימות",
+    url: "/admin/tasks",
+    icon: ClipboardList,
   },
 ];
 

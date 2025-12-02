@@ -13,6 +13,7 @@ import { useDataTable } from "@/hooks/use-data-table";
 
 import { DeleteEmployeeDialog } from "./delete-employee-dialog";
 import { EmployeeBonusesDialog } from "./employee-bonuses-dialog";
+import { EmployeeDocumentsDialog } from "./employee-documents-dialog";
 import { EmployeeFormDialog } from "./employee-form-dialog";
 import { EmployeeRatesDialog } from "./employee-rates-dialog";
 import type { WorkTypeRateType } from "@prisma/client";
@@ -184,6 +185,10 @@ export function EmployeesDataTable({
 
           return (
             <div className="flex items-center justify-end gap-1">
+              <EmployeeDocumentsDialog
+                employeeId={employee.id}
+                employeeName={employee.fullName}
+              />
               <EmployeeRatesDialog
                 employeeId={employee.id}
                 employeeName={employee.fullName}

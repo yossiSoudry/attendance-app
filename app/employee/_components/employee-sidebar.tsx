@@ -3,6 +3,7 @@
 
 import {
   Calculator,
+  ClipboardList,
   Clock,
   History,
   Home,
@@ -21,6 +22,7 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
@@ -34,45 +36,49 @@ type NavItem = {
   title: string;
   url: string;
   icon: React.ComponentType<{ className?: string }>;
+  badge?: number;
 };
 
 type EmployeeSidebarProps = {
   employeeName: string;
+  openTasksCount?: number;
 };
-
-// ========================================
-// Navigation Data
-// ========================================
-
-const navMain: NavItem[] = [
-  {
-    title: "דף הבית",
-    url: "/",
-    icon: Home,
-  },
-  {
-    title: "משמרת נוכחית",
-    url: "/employee",
-    icon: Clock,
-  },
-  {
-    title: "היסטוריית משמרות",
-    url: "/employee/history",
-    icon: History,
-  },
-  {
-    title: "חישוב שכר",
-    url: "/employee/payroll",
-    icon: Calculator,
-  },
-];
 
 // ========================================
 // Component
 // ========================================
 
-export function EmployeeSidebar({ employeeName }: EmployeeSidebarProps) {
+export function EmployeeSidebar({ employeeName, openTasksCount }: EmployeeSidebarProps) {
   const pathname = usePathname();
+
+  const navMain: NavItem[] = [
+    {
+      title: "דף הבית",
+      url: "/",
+      icon: Home,
+    },
+    {
+      title: "משמרת נוכחית",
+      url: "/employee",
+      icon: Clock,
+    },
+    {
+      title: "היסטוריית משמרות",
+      url: "/employee/history",
+      icon: History,
+    },
+    {
+      title: "חישוב שכר",
+      url: "/employee/payroll",
+      icon: Calculator,
+    },
+    {
+      title: "משימות",
+      url: "/employee/tasks",
+      icon: ClipboardList,
+      badge: openTasksCount,
+    },
+  ];
 
   return (
     <Sidebar side="right" collapsible="icon">
@@ -113,6 +119,11 @@ export function EmployeeSidebar({ employeeName }: EmployeeSidebarProps) {
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <SidebarMenuBadge className="!bg-red-500 !text-white">
+                      {item.badge}
+                    </SidebarMenuBadge>
+                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
