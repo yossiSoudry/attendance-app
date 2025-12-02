@@ -1,6 +1,7 @@
 // components/app-navbar.tsx
 "use client";
 
+import { useSession } from "next-auth/react";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -12,6 +13,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { NotificationsBell } from "@/app/admin/_components/notifications-bell";
 
 // ========================================
 // Types
@@ -31,6 +33,9 @@ type AppNavbarProps = {
 // ========================================
 
 export function AppNavbar({ breadcrumbs = [] }: AppNavbarProps) {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role !== undefined;
+
   return (
     <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
       <div className="flex items-center gap-2 px-4">
@@ -62,6 +67,7 @@ export function AppNavbar({ breadcrumbs = [] }: AppNavbarProps) {
       </div>
 
       <div className="flex items-center gap-2 px-4">
+        {isAdmin && <NotificationsBell />}
         <AnimatedThemeToggler />
       </div>
     </header>

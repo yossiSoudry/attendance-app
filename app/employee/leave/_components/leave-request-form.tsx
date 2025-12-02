@@ -95,6 +95,14 @@ export function LeaveRequestForm() {
     setMessage(null);
     setErrors({});
 
+    // Validate sick leave requires document
+    if (leaveType === "SICK" && !uploadedDoc) {
+      setIsPending(false);
+      setMessage({ type: "error", text: "יש להעלות אישור מחלה" });
+      setErrors({ documentUrl: ["יש להעלות אישור מחלה"] });
+      return;
+    }
+
     // Add document info to form data if uploaded
     if (uploadedDoc) {
       formData.set("documentUrl", uploadedDoc.url);
@@ -221,14 +229,16 @@ export function LeaveRequestForm() {
             />
           </div>
 
-          {/* Sick Leave Document Upload */}
+          {/* Sick Leave Document Upload - Required */}
           {leaveType === "SICK" && (
             <div className="space-y-2">
-              <Label>אישור מחלה (אופציונלי)</Label>
+              <Label>
+                אישור מחלה <span className="text-destructive">*</span>
+              </Label>
               {uploadedDoc ? (
-                <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
+                <div className="flex items-center justify-between rounded-lg border border-emerald-500/50 bg-emerald-500/10 p-3">
                   <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-red-500" />
+                    <FileText className="h-5 w-5 text-emerald-600" />
                     <div>
                       <p className="text-sm font-medium">{uploadedDoc.name}</p>
                     </div>
@@ -280,7 +290,11 @@ export function LeaveRequestForm() {
                     <button
                       type="button"
                       onClick={() => open()}
-                      className="flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 p-6 transition-colors hover:border-muted-foreground/50 hover:bg-muted"
+                      className={`flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors hover:bg-muted ${
+                        errors.documentUrl
+                          ? "border-destructive bg-destructive/5"
+                          : "border-muted-foreground/25 bg-muted/50 hover:border-muted-foreground/50"
+                      }`}
                     >
                       <FileUp className="mb-2 h-8 w-8 text-muted-foreground" />
                       <span className="text-sm font-medium">
@@ -292,6 +306,9 @@ export function LeaveRequestForm() {
                     </button>
                   )}
                 </CldUploadWidget>
+              )}
+              {errors.documentUrl && (
+                <p className="text-xs text-destructive">{errors.documentUrl[0]}</p>
               )}
             </div>
           )}

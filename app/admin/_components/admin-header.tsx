@@ -1,7 +1,6 @@
 import { Shield, ShieldCheck, ShieldAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { AdminRole } from "@prisma/client";
-import { NotificationsBell } from "./notifications-bell";
 
 interface AdminHeaderProps {
   session: {
@@ -32,7 +31,6 @@ export function AdminHeader({ session }: AdminHeaderProps) {
 
   return (
     <div className="flex items-center gap-3">
-      <NotificationsBell />
       <Badge variant="outline" className="gap-1">
         <RoleIcon className="size-3" />
         {roleLabels[user.role]}
