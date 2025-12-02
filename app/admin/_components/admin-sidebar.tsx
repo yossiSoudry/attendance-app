@@ -3,7 +3,6 @@
 
 import * as React from "react";
 import {
-  Bell,
   Briefcase,
   Calculator,
   CalendarDays,
@@ -15,6 +14,7 @@ import {
   LayoutDashboard,
   LogOut,
   Settings,
+  Umbrella,
   Users,
   UsersRound,
 } from "lucide-react";
@@ -23,7 +23,6 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import type { AdminRole } from "@prisma/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,7 +46,6 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -55,8 +53,6 @@ import {
   SidebarMenuSubItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { getPendingLeaveCount } from "../leave/_actions/leave-admin-actions";
-import { getPendingShiftsCount } from "../_actions/approval-actions";
 
 // ========================================
 // Types
@@ -96,6 +92,16 @@ const navMain: NavItem[] = [
     icon: Calculator,
   },
   {
+    title: "חופשות ומחלה",
+    url: "/admin/leave",
+    icon: Umbrella,
+  },
+  {
+    title: "משימות",
+    url: "/admin/tasks",
+    icon: ClipboardList,
+  },
+  {
     title: "סוגי עבודה",
     url: "/admin/work-types",
     icon: Briefcase,
@@ -104,11 +110,6 @@ const navMain: NavItem[] = [
     title: "לוח שנה",
     url: "/admin/calendar",
     icon: CalendarDays,
-  },
-  {
-    title: "משימות",
-    url: "/admin/tasks",
-    icon: ClipboardList,
   },
 ];
 
@@ -143,29 +144,6 @@ export function AdminSidebar() {
   const { data: session } = useSession();
   const userRole = session?.user?.role as AdminRole | undefined;
   const showTeamManagement = canManageAdmins(userRole);
-
-  // Pending counts state
-  const [pendingLeaveCount, setPendingLeaveCount] = React.useState(0);
-  const [pendingShiftsCount, setPendingShiftsCount] = React.useState(0);
-
-  // Load pending counts
-  React.useEffect(() => {
-    async function loadCounts() {
-      try {
-        const [leaveCount, shiftsCount] = await Promise.all([
-          getPendingLeaveCount(),
-          getPendingShiftsCount(),
-        ]);
-        setPendingLeaveCount(leaveCount);
-        setPendingShiftsCount(shiftsCount);
-      } catch (error) {
-        console.error("Failed to load pending counts:", error);
-      }
-    }
-    loadCounts();
-  }, [pathname]); // Reload when pathname changes
-
-  const totalPendingCount = pendingLeaveCount + pendingShiftsCount;
 
   async function handleSignOut() {
     await signOut({ callbackUrl: "/admin/login" });
@@ -249,69 +227,12 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Notifications Section */}
-        <SidebarGroup>
-          <SidebarGroupLabel>בקשות ואישורים</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {/* Pending Notifications Overview */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === "/admin/notifications"}
-                  tooltip="התראות"
-                >
-                  <Link href="/admin/leave">
-                    <Bell className="h-4 w-4" />
-                    <span>התראות</span>
-                    {totalPendingCount > 0 && (
-                      <SidebarMenuBadge className="bg-destructive text-destructive-foreground">
-                        {totalPendingCount}
-                      </SidebarMenuBadge>
-                    )}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              {/* Leave Requests */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === "/admin/leave"}
-                  tooltip="בקשות חופשה"
-                >
-                  <Link href="/admin/leave">
-                    <CalendarDays className="h-4 w-4" />
-                    <span>חופשות ומחלה</span>
-                    {pendingLeaveCount > 0 && (
-                      <SidebarMenuBadge className="bg-amber-500 text-white">
-                        {pendingLeaveCount}
-                      </SidebarMenuBadge>
-                    )}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              {/* Pending Shifts */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === "/admin/shifts/pending"}
-                  tooltip="משמרות לאישור"
-                >
-                  <Link href="/admin/shifts">
-                    <Clock className="h-4 w-4" />
-                    <span>משמרות לאישור</span>
-                    {pendingShiftsCount > 0 && (
-                      <SidebarMenuBadge className="bg-orange-500 text-white">
-                        {pendingShiftsCount}
-                      </SidebarMenuBadge>
-                    )}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              {showTeamManagement && (
+        {/* Team Management - only for OWNER/ADMIN */}
+        {showTeamManagement && (
+          <SidebarGroup>
+            <SidebarGroupLabel>ניהול</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
@@ -324,10 +245,10 @@ export function AdminSidebar() {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t">
