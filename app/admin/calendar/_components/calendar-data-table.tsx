@@ -107,13 +107,16 @@ const columns: ColumnDef<CalendarEventTableRow>[] = [
   {
     accessorKey: "gregorianDate",
     header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        תאריך
-        <ArrowUpDown className="mr-2 h-4 w-4" />
-      </Button>
+      <div className="text-right">
+        <Button
+          variant="ghost"
+          className="h-8 px-2"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          תאריך
+          <ArrowUpDown className="mr-2 h-4 w-4" />
+        </Button>
+      </div>
     ),
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
@@ -124,14 +127,14 @@ const columns: ColumnDef<CalendarEventTableRow>[] = [
   },
   {
     accessorKey: "nameHe",
-    header: "שם האירוע",
+    header: () => <div className="text-right">שם האירוע</div>,
     cell: ({ row }) => (
       <div className="font-medium">{row.getValue("nameHe")}</div>
     ),
   },
   {
     accessorKey: "eventType",
-    header: "סוג",
+    header: () => <div className="text-right">סוג</div>,
     cell: ({ row }) => {
       const type = row.getValue("eventType") as string;
       return (
@@ -146,7 +149,7 @@ const columns: ColumnDef<CalendarEventTableRow>[] = [
   },
   {
     accessorKey: "isRestDay",
-    header: "יום מנוחה",
+    header: () => <div className="text-center">יום מנוחה</div>,
     cell: ({ row }) => (
       <div className="flex items-center justify-center">
         {row.getValue("isRestDay") ? (
@@ -159,7 +162,7 @@ const columns: ColumnDef<CalendarEventTableRow>[] = [
   },
   {
     accessorKey: "isShortDay",
-    header: "יום קצר",
+    header: () => <div className="text-center">יום קצר</div>,
     cell: ({ row }) => (
       <div className="flex items-center justify-center">
         {row.getValue("isShortDay") ? (

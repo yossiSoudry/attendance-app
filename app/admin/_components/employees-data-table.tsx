@@ -76,7 +76,7 @@ export function EmployeesDataTable({
           />
         ),
         cell: ({ row }) => (
-          <div dir="ltr" className="tabular-nums">
+          <div dir="ltr" className="tabular-nums text-right">
             {row.getValue("nationalId") as string}
           </div>
         ),

@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Download,
   Loader2,
   User,
 } from "lucide-react";
@@ -34,6 +35,7 @@ import {
   type AdminPayrollSummary,
   type AdminShiftPayroll,
 } from "../_actions/admin-payroll-actions";
+import { ExportPayrollDialog } from "./export-payroll-dialog";
 
 // ========================================
 // Types
@@ -516,6 +518,9 @@ export function AdminPayrollContent({ employees }: AdminPayrollContentProps) {
         <>
           {/* Summary Card */}
           <section className="rounded-2xl border bg-card p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-end">
+              <ExportPayrollDialog payroll={payrollData} mode="single" />
+            </div>
             <SummaryCard
               summary={payrollData.summary}
               employeeName={payrollData.employeeName}

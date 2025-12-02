@@ -90,6 +90,33 @@ enum AdminStatus {
   INACTIVE
 }
 
+// סוג העסקה
+enum EmploymentType {
+  HOURLY    // שעתי
+  MONTHLY   // חודשי
+}
+
+// סוג תשלום נסיעות
+enum TravelAllowanceType {
+  NONE      // ללא תשלום נסיעות
+  DAILY     // לפי יום עבודה
+  MONTHLY   // סכום חודשי קבוע
+}
+
+// סוג חופשה
+enum LeaveType {
+  VACATION  // חופשה
+  SICK      // מחלה
+}
+
+// סטטוס בקשת חופשה
+enum LeaveStatus {
+  PENDING            // ממתין לאישור
+  APPROVED           // אושר
+  PARTIALLY_APPROVED // אושר חלקית
+  REJECTED           // נדחה
+}
+
 model Department {
   id          String   @id @default(uuid()) @db.Uuid
   name        String   @unique

@@ -171,12 +171,12 @@ export function AdminsTable({ admins, currentUserId, currentUserRole }: AdminsTa
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>שם</TableHead>
-              <TableHead>אימייל</TableHead>
-              <TableHead>תפקיד</TableHead>
-              <TableHead>מחלקה</TableHead>
-              <TableHead>סטטוס</TableHead>
-              <TableHead>הצטרף</TableHead>
+              <TableHead className="text-right">שם</TableHead>
+              <TableHead className="text-right">אימייל</TableHead>
+              <TableHead className="text-right">תפקיד</TableHead>
+              <TableHead className="text-right">מחלקה</TableHead>
+              <TableHead className="text-right">סטטוס</TableHead>
+              <TableHead className="text-right">הצטרף</TableHead>
               <TableHead className="w-[70px]"></TableHead>
             </TableRow>
           </TableHeader>

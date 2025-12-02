@@ -15,16 +15,16 @@ export const dynamic = "force-dynamic";
 export default async function AdminPage() {
   const session = await requireAdminSession();
 
-  const employees: Employee[] = await prisma.employee.findMany({
-    orderBy: { createdAt: "desc" },
-  });
-
-  const workTypes = await prisma.workType.findMany({
-    select: { id: true, name: true, isDefault: true, rateType: true, rateValue: true },
-    orderBy: { name: "asc" },
-  });
-
-  const pendingCount = await getPendingShiftsCount();
+  const [employees, workTypes, pendingCount] = await Promise.all([
+    prisma.employee.findMany({
+      orderBy: { createdAt: "desc" },
+    }) as Promise<Employee[]>,
+    prisma.workType.findMany({
+      select: { id: true, name: true, isDefault: true, rateType: true, rateValue: true },
+      orderBy: { name: "asc" },
+    }),
+    getPendingShiftsCount(),
+  ]);
 
   const managerId = session.user.id;
 

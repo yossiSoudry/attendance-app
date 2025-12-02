@@ -10,6 +10,7 @@ import {
   ClipboardList,
   Clock,
   Home,
+  LayoutDashboard,
   LogOut,
   Settings,
   User,
@@ -69,6 +70,11 @@ type NavItem = {
 // ========================================
 
 const navMain: NavItem[] = [
+  {
+    title: "דשבורד",
+    url: "/admin/dashboard",
+    icon: LayoutDashboard,
+  },
   {
     title: "עובדים",
     url: "/admin",
