@@ -7,6 +7,8 @@ import {
   CalendarDays,
   Check,
   ChevronDown,
+  ExternalLink,
+  FileText,
   Loader2,
   MessageSquare,
   Stethoscope,
@@ -173,6 +175,22 @@ export function LeaveRequestCard({ request, onAction }: LeaveRequestCardProps) {
               <span>{request.employeeNote}</span>
             </div>
           </div>
+        )}
+
+        {/* Attached Document */}
+        {request.documentUrl && (
+          <a
+            href={request.documentUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded bg-emerald-500/10 px-3 py-2 text-sm text-emerald-600 transition-colors hover:bg-emerald-500/20"
+          >
+            <FileText className="h-4 w-4" />
+            <span className="flex-1">
+              {request.documentName || "אישור מחלה"}
+            </span>
+            <ExternalLink className="h-3 w-3" />
+          </a>
         )}
 
         {/* Submitted Date */}

@@ -2,15 +2,10 @@
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth";
 import type { Employee } from "@/types/prisma";
-import { Briefcase, CalendarDays, Clock, Users, UsersRound } from "lucide-react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { getPendingShiftsCount } from "./_actions/approval-actions";
 import {
   EmployeesDataTable,
   type EmployeeTableRow,
 } from "./_components/employees-data-table";
-import { PendingShiftsDialog } from "./_components/pending-shifts-dialog";
 import { AdminHeader } from "./_components/admin-header";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminPage() {
   const session = await requireAdminSession();
 
-  const [employees, workTypes, pendingCount] = await Promise.all([
+  const [employees, workTypes] = await Promise.all([
     prisma.employee.findMany({
       orderBy: { createdAt: "desc" },
     }) as Promise<Employee[]>,
@@ -26,11 +21,7 @@ export default async function AdminPage() {
       select: { id: true, name: true, isDefault: true, rateType: true, rateValue: true },
       orderBy: { name: "asc" },
     }),
-    getPendingShiftsCount(),
   ]);
-
-  const managerId = session.user.id;
-  const canManageTeam = session.user.role === "ADMIN";
 
   const rows: EmployeeTableRow[] = employees.map((emp) => ({
     id: emp.id,
@@ -53,51 +44,11 @@ export default async function AdminPage() {
 
       <section className="rounded-3xl border border-border bg-card p-6 shadow-lg">
         <h1 className="bg-linear-to-l from-violet-400 via-sky-400 to-violet-300 bg-clip-text text-2xl font-bold text-transparent">
-          ממשק מנהל – עובדים
+          ניהול עובדים
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          ניהול עובדים, משמרות וסוגי עבודה
+          צפייה וניהול של כל העובדים במערכת
         </p>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/admin" className="gap-2">
-              <Users className="h-4 w-4" />
-              עובדים
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/admin/shifts" className="gap-2">
-              <Clock className="h-4 w-4" />
-              משמרות
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/admin/work-types" className="gap-2">
-              <Briefcase className="h-4 w-4" />
-              סוגי עבודה
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/admin/leave" className="gap-2">
-              <CalendarDays className="h-4 w-4" />
-              חופשות
-            </Link>
-          </Button>
-          {canManageTeam && (
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/admin/team" className="gap-2">
-                <UsersRound className="h-4 w-4" />
-                ניהול צוות
-              </Link>
-            </Button>
-          )}
-          <PendingShiftsDialog
-            managerId={managerId}
-            initialCount={pendingCount}
-            workTypes={workTypes}
-          />
-        </div>
       </section>
 
       <section className="rounded-3xl border border-border bg-card p-4">

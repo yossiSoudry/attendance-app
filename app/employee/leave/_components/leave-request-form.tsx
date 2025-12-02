@@ -2,7 +2,8 @@
 "use client";
 
 import * as React from "react";
-import { CalendarDays, Loader2, Send } from "lucide-react";
+import { CalendarDays, Loader2, Send, FileUp, X, FileText } from "lucide-react";
+import { CldUploadWidget, type CloudinaryUploadWidgetResults } from "next-cloudinary";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,12 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { createLeaveRequest } from "../../_actions/leave-actions";
 
+type UploadedDocument = {
+  url: string;
+  name: string;
+  publicId: string;
+};
+
 export function LeaveRequestForm() {
   const [isPending, setIsPending] = React.useState(false);
   const [message, setMessage] = React.useState<{
@@ -37,6 +44,8 @@ export function LeaveRequestForm() {
   // Calculate days between dates
   const [startDate, setStartDate] = React.useState("");
   const [endDate, setEndDate] = React.useState("");
+  const [leaveType, setLeaveType] = React.useState<"VACATION" | "SICK">("VACATION");
+  const [uploadedDoc, setUploadedDoc] = React.useState<UploadedDocument | null>(null);
 
   const calculatedDays = React.useMemo(() => {
     if (!startDate || !endDate) return null;
@@ -61,10 +70,36 @@ export function LeaveRequestForm() {
     return count;
   }, [startDate, endDate]);
 
+  function handleUploadSuccess(result: CloudinaryUploadWidgetResults) {
+    if (result.info && typeof result.info !== "string") {
+      const info = result.info as {
+        secure_url: string;
+        original_filename: string;
+        format: string;
+        public_id: string;
+      };
+      setUploadedDoc({
+        url: info.secure_url,
+        name: `${info.original_filename}.${info.format}`,
+        publicId: info.public_id,
+      });
+    }
+  }
+
+  function removeDocument() {
+    setUploadedDoc(null);
+  }
+
   async function handleSubmit(formData: FormData) {
     setIsPending(true);
     setMessage(null);
     setErrors({});
+
+    // Add document info to form data if uploaded
+    if (uploadedDoc) {
+      formData.set("documentUrl", uploadedDoc.url);
+      formData.set("documentName", uploadedDoc.name);
+    }
 
     const result = await createLeaveRequest(formData);
 
@@ -75,6 +110,8 @@ export function LeaveRequestForm() {
       formRef.current?.reset();
       setStartDate("");
       setEndDate("");
+      setLeaveType("VACATION");
+      setUploadedDoc(null);
     } else {
       setMessage({ type: "error", text: result.message });
       if (result.errors) {
@@ -102,7 +139,12 @@ export function LeaveRequestForm() {
           {/* Leave Type */}
           <div className="space-y-2">
             <Label htmlFor="leaveType">סוג חופשה</Label>
-            <Select name="leaveType" required defaultValue="VACATION">
+            <Select
+              name="leaveType"
+              required
+              value={leaveType}
+              onValueChange={(v) => setLeaveType(v as "VACATION" | "SICK")}
+            >
               <SelectTrigger id="leaveType">
                 <SelectValue placeholder="בחר סוג חופשה" />
               </SelectTrigger>
@@ -178,6 +220,81 @@ export function LeaveRequestForm() {
               maxLength={500}
             />
           </div>
+
+          {/* Sick Leave Document Upload */}
+          {leaveType === "SICK" && (
+            <div className="space-y-2">
+              <Label>אישור מחלה (אופציונלי)</Label>
+              {uploadedDoc ? (
+                <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-red-500" />
+                    <div>
+                      <p className="text-sm font-medium">{uploadedDoc.name}</p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={removeDocument}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <CldUploadWidget
+                  signatureEndpoint="/api/sign-cloudinary-params"
+                  options={{
+                    folder: "attendance-app/sick-leave-docs",
+                    resourceType: "auto",
+                    maxFiles: 1,
+                    clientAllowedFormats: [
+                      "jpg",
+                      "jpeg",
+                      "png",
+                      "pdf",
+                      "heic",
+                    ],
+                    maxFileSize: 10000000, // 10MB
+                    sources: ["local", "camera"],
+                    language: "he",
+                    text: {
+                      he: {
+                        or: "או",
+                        menu: {
+                          files: "מהמחשב",
+                          camera: "מצלמה",
+                        },
+                        local: {
+                          browse: "בחר קובץ",
+                          dd_title_single: "גרור קובץ לכאן",
+                          dd_title_multi: "גרור קבצים לכאן",
+                        },
+                      },
+                    },
+                  }}
+                  onSuccess={handleUploadSuccess}
+                >
+                  {({ open }) => (
+                    <button
+                      type="button"
+                      onClick={() => open()}
+                      className="flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 p-6 transition-colors hover:border-muted-foreground/50 hover:bg-muted"
+                    >
+                      <FileUp className="mb-2 h-8 w-8 text-muted-foreground" />
+                      <span className="text-sm font-medium">
+                        לחץ להעלאת אישור מחלה
+                      </span>
+                      <span className="mt-1 text-xs text-muted-foreground">
+                        תמונה או PDF (עד 10MB)
+                      </span>
+                    </button>
+                  )}
+                </CldUploadWidget>
+              )}
+            </div>
+          )}
 
           {/* Message */}
           {message && (

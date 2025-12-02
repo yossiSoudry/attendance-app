@@ -21,6 +21,8 @@ export type LeaveRequestForAdmin = {
   approvedDays: number | null;
   employeeNote: string | null;
   managerNote: string | null;
+  documentUrl: string | null;
+  documentName: string | null;
   createdAt: Date;
 };
 
@@ -58,6 +60,8 @@ export async function getPendingLeaveRequests(): Promise<LeaveRequestForAdmin[]>
     approvedDays: r.approvedDays,
     employeeNote: r.employeeNote,
     managerNote: r.managerNote,
+    documentUrl: r.documentUrl,
+    documentName: r.documentName,
     createdAt: r.createdAt,
   }));
 }
@@ -106,6 +110,8 @@ export async function getAllLeaveRequests(
     approvedDays: r.approvedDays,
     employeeNote: r.employeeNote,
     managerNote: r.managerNote,
+    documentUrl: r.documentUrl,
+    documentName: r.documentName,
     createdAt: r.createdAt,
   }));
 }

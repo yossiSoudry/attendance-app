@@ -21,6 +21,8 @@ export type LeaveRequestWithEmployee = {
   approvedDays: number | null;
   employeeNote: string | null;
   managerNote: string | null;
+  documentUrl: string | null;
+  documentName: string | null;
   createdAt: Date;
 };
 
@@ -40,6 +42,8 @@ const leaveRequestSchema = z
     startDate: z.string().min(1, "תאריך התחלה נדרש"),
     endDate: z.string().min(1, "תאריך סיום נדרש"),
     employeeNote: z.string().max(500, "הערה לא יכולה לעלות על 500 תווים").optional(),
+    documentUrl: z.string().url().optional().or(z.literal("")),
+    documentName: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -99,6 +103,8 @@ export async function createLeaveRequest(
     startDate: formData.get("startDate") as string,
     endDate: formData.get("endDate") as string,
     employeeNote: formData.get("employeeNote") as string,
+    documentUrl: formData.get("documentUrl") as string || "",
+    documentName: formData.get("documentName") as string || "",
   };
 
   const parsed = leaveRequestSchema.safeParse(rawData);
@@ -111,7 +117,7 @@ export async function createLeaveRequest(
     };
   }
 
-  const { leaveType, startDate, endDate, employeeNote } = parsed.data;
+  const { leaveType, startDate, endDate, employeeNote, documentUrl, documentName } = parsed.data;
 
   const startDateObj = new Date(startDate);
   const endDateObj = new Date(endDate);
@@ -159,6 +165,8 @@ export async function createLeaveRequest(
       endDate: endDateObj,
       totalDays,
       employeeNote: employeeNote || null,
+      documentUrl: documentUrl || null,
+      documentName: documentName || null,
     },
   });
 
@@ -199,6 +207,8 @@ export async function getMyLeaveRequests(): Promise<LeaveRequestWithEmployee[]> 
     approvedDays: r.approvedDays,
     employeeNote: r.employeeNote,
     managerNote: r.managerNote,
+    documentUrl: r.documentUrl,
+    documentName: r.documentName,
     createdAt: r.createdAt,
   }));
 }

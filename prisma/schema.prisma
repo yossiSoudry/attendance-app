@@ -464,6 +464,10 @@ model LeaveRequest {
   employeeNote    String?      // הערת עובד
   managerNote     String?      // הערת מנהל
 
+  // Document attachment (for sick leave)
+  documentUrl     String?      // קישור לאישור מחלה
+  documentName    String?      // שם הקובץ
+
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 

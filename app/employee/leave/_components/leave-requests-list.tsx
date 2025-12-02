@@ -7,6 +7,8 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock,
+  ExternalLink,
+  FileText,
   Loader2,
   MessageSquare,
   Stethoscope,
@@ -172,6 +174,22 @@ function LeaveRequestCard({
                 {request.managerNote}
               </div>
             </div>
+          )}
+
+          {/* Attached Document */}
+          {request.documentUrl && (
+            <a
+              href={request.documentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 flex items-center gap-2 rounded bg-emerald-500/10 px-2 py-1.5 text-sm text-emerald-600 transition-colors hover:bg-emerald-500/20"
+            >
+              <FileText className="h-4 w-4" />
+              <span className="flex-1">
+                {request.documentName || "אישור מחלה"}
+              </span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
           )}
         </div>
 

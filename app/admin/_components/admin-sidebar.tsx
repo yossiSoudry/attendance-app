@@ -1,7 +1,9 @@
 // app/admin/_components/admin-sidebar.tsx
 "use client";
 
+import * as React from "react";
 import {
+  Bell,
   Briefcase,
   Calculator,
   CalendarDays,
@@ -13,7 +15,6 @@ import {
   LayoutDashboard,
   LogOut,
   Settings,
-  User,
   Users,
   UsersRound,
 } from "lucide-react";
@@ -22,6 +23,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import type { AdminRole } from "@prisma/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +47,7 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -52,6 +55,8 @@ import {
   SidebarMenuSubItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { getPendingLeaveCount } from "../leave/_actions/leave-admin-actions";
+import { getPendingShiftsCount } from "../_actions/approval-actions";
 
 // ========================================
 // Types
@@ -139,6 +144,29 @@ export function AdminSidebar() {
   const userRole = session?.user?.role as AdminRole | undefined;
   const showTeamManagement = canManageAdmins(userRole);
 
+  // Pending counts state
+  const [pendingLeaveCount, setPendingLeaveCount] = React.useState(0);
+  const [pendingShiftsCount, setPendingShiftsCount] = React.useState(0);
+
+  // Load pending counts
+  React.useEffect(() => {
+    async function loadCounts() {
+      try {
+        const [leaveCount, shiftsCount] = await Promise.all([
+          getPendingLeaveCount(),
+          getPendingShiftsCount(),
+        ]);
+        setPendingLeaveCount(leaveCount);
+        setPendingShiftsCount(shiftsCount);
+      } catch (error) {
+        console.error("Failed to load pending counts:", error);
+      }
+    }
+    loadCounts();
+  }, [pathname]); // Reload when pathname changes
+
+  const totalPendingCount = pendingLeaveCount + pendingShiftsCount;
+
   async function handleSignOut() {
     await signOut({ callbackUrl: "/admin/login" });
   }
@@ -217,6 +245,72 @@ export function AdminSidebar() {
                   </SidebarMenuItem>
                 )
               )}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Notifications Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>בקשות ואישורים</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {/* Pending Notifications Overview */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/admin/notifications"}
+                  tooltip="התראות"
+                >
+                  <Link href="/admin/leave">
+                    <Bell className="h-4 w-4" />
+                    <span>התראות</span>
+                    {totalPendingCount > 0 && (
+                      <SidebarMenuBadge className="bg-destructive text-destructive-foreground">
+                        {totalPendingCount}
+                      </SidebarMenuBadge>
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* Leave Requests */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/admin/leave"}
+                  tooltip="בקשות חופשה"
+                >
+                  <Link href="/admin/leave">
+                    <CalendarDays className="h-4 w-4" />
+                    <span>חופשות ומחלה</span>
+                    {pendingLeaveCount > 0 && (
+                      <SidebarMenuBadge className="bg-amber-500 text-white">
+                        {pendingLeaveCount}
+                      </SidebarMenuBadge>
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* Pending Shifts */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/admin/shifts/pending"}
+                  tooltip="משמרות לאישור"
+                >
+                  <Link href="/admin/shifts">
+                    <Clock className="h-4 w-4" />
+                    <span>משמרות לאישור</span>
+                    {pendingShiftsCount > 0 && (
+                      <SidebarMenuBadge className="bg-orange-500 text-white">
+                        {pendingShiftsCount}
+                      </SidebarMenuBadge>
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
               {showTeamManagement && (
                 <SidebarMenuItem>
                   <SidebarMenuButton
