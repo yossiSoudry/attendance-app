@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession, canManageAdmins } from "@/lib/auth";
 import type { Employee } from "@/types/prisma";
-import { Briefcase, Clock, Users, UsersRound } from "lucide-react";
+import { Briefcase, CalendarDays, Clock, Users, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { getPendingShiftsCount } from "./_actions/approval-actions";
 import {
@@ -37,7 +37,13 @@ export default async function AdminPage() {
     fullName: emp.fullName,
     nationalId: emp.nationalId,
     status: emp.status as EmployeeTableRow["status"],
+    employmentType: emp.employmentType as EmployeeTableRow["employmentType"],
     baseHourlyRate: emp.baseHourlyRate,
+    monthlyRate: emp.monthlyRate,
+    workDaysPerWeek: emp.workDaysPerWeek,
+    travelAllowanceType:
+      emp.travelAllowanceType as EmployeeTableRow["travelAllowanceType"],
+    travelAllowanceAmount: emp.travelAllowanceAmount,
     createdAt: emp.createdAt.toISOString(),
   }));
 
@@ -72,6 +78,12 @@ export default async function AdminPage() {
             <Link href="/admin/work-types" className="gap-2">
               <Briefcase className="h-4 w-4" />
               סוגי עבודה
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/admin/leave" className="gap-2">
+              <CalendarDays className="h-4 w-4" />
+              חופשות
             </Link>
           </Button>
           {canManageTeam && (

@@ -23,7 +23,17 @@ export async function createEmployee(data: EmployeeFormValues): Promise<ActionRe
     };
   }
 
-  const { fullName, nationalId, baseHourlyRate, status } = parsed.data;
+  const {
+    fullName,
+    nationalId,
+    baseHourlyRate,
+    status,
+    employmentType,
+    monthlyRate,
+    workDaysPerWeek,
+    travelAllowanceType,
+    travelAllowanceAmount,
+  } = parsed.data;
 
   // בדיקה אם תעודת זהות כבר קיימת
   const existing = await prisma.employee.findUnique({
@@ -42,8 +52,15 @@ export async function createEmployee(data: EmployeeFormValues): Promise<ActionRe
     data: {
       fullName,
       nationalId,
-      baseHourlyRate: Math.round(baseHourlyRate * 100), // המרה לאגורות
       status,
+      employmentType,
+      baseHourlyRate: Math.round(baseHourlyRate * 100), // המרה לאגורות
+      monthlyRate: monthlyRate ? Math.round(monthlyRate * 100) : null,
+      workDaysPerWeek,
+      travelAllowanceType,
+      travelAllowanceAmount: travelAllowanceAmount
+        ? Math.round(travelAllowanceAmount * 100)
+        : null,
     },
   });
 
@@ -57,8 +74,15 @@ export async function createEmployee(data: EmployeeFormValues): Promise<ActionRe
       after: {
         fullName,
         nationalId,
-        baseHourlyRate: Math.round(baseHourlyRate * 100),
         status,
+        employmentType,
+        baseHourlyRate: Math.round(baseHourlyRate * 100),
+        monthlyRate: monthlyRate ? Math.round(monthlyRate * 100) : null,
+        workDaysPerWeek,
+        travelAllowanceType,
+        travelAllowanceAmount: travelAllowanceAmount
+          ? Math.round(travelAllowanceAmount * 100)
+          : null,
       },
     },
   });
@@ -85,7 +109,17 @@ export async function updateEmployee(
     };
   }
 
-  const { fullName, nationalId, baseHourlyRate, status } = parsed.data;
+  const {
+    fullName,
+    nationalId,
+    baseHourlyRate,
+    status,
+    employmentType,
+    monthlyRate,
+    workDaysPerWeek,
+    travelAllowanceType,
+    travelAllowanceAmount,
+  } = parsed.data;
 
   // בדיקה אם העובד קיים
   const existing = await prisma.employee.findUnique({
@@ -118,8 +152,13 @@ export async function updateEmployee(
   const beforeData = {
     fullName: existing.fullName,
     nationalId: existing.nationalId,
-    baseHourlyRate: existing.baseHourlyRate,
     status: existing.status,
+    employmentType: existing.employmentType,
+    baseHourlyRate: existing.baseHourlyRate,
+    monthlyRate: existing.monthlyRate,
+    workDaysPerWeek: existing.workDaysPerWeek,
+    travelAllowanceType: existing.travelAllowanceType,
+    travelAllowanceAmount: existing.travelAllowanceAmount,
   };
 
   await prisma.employee.update({
@@ -127,8 +166,15 @@ export async function updateEmployee(
     data: {
       fullName,
       nationalId,
-      baseHourlyRate: Math.round(baseHourlyRate * 100),
       status,
+      employmentType,
+      baseHourlyRate: Math.round(baseHourlyRate * 100),
+      monthlyRate: monthlyRate ? Math.round(monthlyRate * 100) : null,
+      workDaysPerWeek,
+      travelAllowanceType,
+      travelAllowanceAmount: travelAllowanceAmount
+        ? Math.round(travelAllowanceAmount * 100)
+        : null,
     },
   });
 
@@ -143,8 +189,15 @@ export async function updateEmployee(
       after: {
         fullName,
         nationalId,
-        baseHourlyRate: Math.round(baseHourlyRate * 100),
         status,
+        employmentType,
+        baseHourlyRate: Math.round(baseHourlyRate * 100),
+        monthlyRate: monthlyRate ? Math.round(monthlyRate * 100) : null,
+        workDaysPerWeek,
+        travelAllowanceType,
+        travelAllowanceAmount: travelAllowanceAmount
+          ? Math.round(travelAllowanceAmount * 100)
+          : null,
       },
     },
   });
@@ -172,8 +225,13 @@ export async function deleteEmployee(id: string): Promise<ActionResult> {
   const beforeData = {
     fullName: existing.fullName,
     nationalId: existing.nationalId,
-    baseHourlyRate: existing.baseHourlyRate,
     status: existing.status,
+    employmentType: existing.employmentType,
+    baseHourlyRate: existing.baseHourlyRate,
+    monthlyRate: existing.monthlyRate,
+    workDaysPerWeek: existing.workDaysPerWeek,
+    travelAllowanceType: existing.travelAllowanceType,
+    travelAllowanceAmount: existing.travelAllowanceAmount,
   };
 
   await prisma.employee.delete({

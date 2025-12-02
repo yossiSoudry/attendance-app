@@ -21,7 +21,12 @@ export type EmployeeTableRow = {
   fullName: string;
   nationalId: string;
   status: "ACTIVE" | "BLOCKED";
+  employmentType: "HOURLY" | "MONTHLY";
   baseHourlyRate: number | null;
+  monthlyRate: number | null;
+  workDaysPerWeek: number;
+  travelAllowanceType: "NONE" | "DAILY" | "MONTHLY";
+  travelAllowanceAmount: number | null;
   createdAt: string;
 };
 

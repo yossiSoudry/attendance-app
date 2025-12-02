@@ -3,7 +3,7 @@ import { ShiftDurationWidget } from "@/components/shift-duration-widget";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import type { ShiftStatus } from "@/types/prisma";
-import { History } from "lucide-react";
+import { CalendarDays, History } from "lucide-react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ClockInButton } from "./_components/clock-in-button";
@@ -195,23 +195,17 @@ export default async function EmployeeHomePage() {
                   היסטוריית משמרות
                 </a>
               </Button>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" asChild>
-                  <a href="/employee/history" className="gap-2">
-                    <History className="h-4 w-4" />
-                    היסטוריית משמרות
-                  </a>
-                </Button>
-                <RetroShiftFormDialog
-                  employeeId={employee.id}
-                  workTypes={workTypes}
-                />
-                <EmployeePayrollDialog employeeId={employee.id} />
-              </div>
+              <Button variant="outline" asChild>
+                <a href="/employee/leave" className="gap-2">
+                  <CalendarDays className="h-4 w-4" />
+                  בקשות חופשה
+                </a>
+              </Button>
               <RetroShiftFormDialog
                 employeeId={employee.id}
                 workTypes={workTypes}
               />
+              <EmployeePayrollDialog employeeId={employee.id} />
             </div>
           </div>
         </section>
