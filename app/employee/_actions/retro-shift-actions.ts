@@ -58,6 +58,19 @@ export async function submitRetroShift(
       };
     }
 
+    // Get employee's organizationId
+    const employee = await prisma.employee.findUnique({
+      where: { id: employeeId },
+      select: { organizationId: true },
+    });
+
+    if (!employee) {
+      return {
+        success: false,
+        message: "עובד לא נמצא",
+      };
+    }
+
     const { workTypeId, date, startTime, endTime, notes } = validated.data;
 
     // Build start and end DateTime
@@ -82,6 +95,7 @@ export async function submitRetroShift(
     // Check for overlapping shifts
     const overlapping = await prisma.shift.findFirst({
       where: {
+        organizationId: employee.organizationId,
         employeeId,
         status: { notIn: ["REJECTED"] },
         OR: [
@@ -111,6 +125,7 @@ export async function submitRetroShift(
     // Create the retroactive shift
     const shift = await prisma.shift.create({
       data: {
+        organizationId: employee.organizationId,
         employeeId,
         workTypeId: workTypeId || null,
         startTime: startDateTime,
@@ -127,6 +142,7 @@ export async function submitRetroShift(
     await prisma.timeEvent.createMany({
       data: [
         {
+          organizationId: employee.organizationId,
           employeeId,
           shiftId: shift.id,
           eventType: "CORRECTION_IN",
@@ -134,6 +150,7 @@ export async function submitRetroShift(
           time: startDateTime,
         },
         {
+          organizationId: employee.organizationId,
           employeeId,
           shiftId: shift.id,
           eventType: "CORRECTION_OUT",
@@ -146,6 +163,7 @@ export async function submitRetroShift(
     // Log to audit
     await prisma.auditLog.create({
       data: {
+        organizationId: employee.organizationId,
         actorId: employeeId,
         actorType: "EMPLOYEE",
         entity: "SHIFT",
@@ -195,8 +213,19 @@ export type PendingShiftInfo = {
 export async function getEmployeePendingShifts(
   employeeId: string
 ): Promise<PendingShiftInfo[]> {
+  // Get employee's organizationId
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    select: { organizationId: true },
+  });
+
+  if (!employee) {
+    return [];
+  }
+
   const shifts = await prisma.shift.findMany({
     where: {
+      organizationId: employee.organizationId,
       employeeId,
       isRetro: true,
       status: { in: ["PENDING_APPROVAL", "REJECTED"] },
@@ -237,8 +266,21 @@ export async function cancelPendingShift(
   shiftId: string
 ): Promise<ActionResult> {
   try {
+    // Get employee's organizationId
+    const employee = await prisma.employee.findUnique({
+      where: { id: employeeId },
+      select: { organizationId: true },
+    });
+
+    if (!employee) {
+      return { success: false, message: "עובד לא נמצא" };
+    }
+
     const shift = await prisma.shift.findUnique({
-      where: { id: shiftId },
+      where: {
+        id: shiftId,
+        organizationId: employee.organizationId,
+      },
     });
 
     if (!shift) {
@@ -265,6 +307,7 @@ export async function cancelPendingShift(
     // Log to audit
     await prisma.auditLog.create({
       data: {
+        organizationId: employee.organizationId,
         actorId: employeeId,
         actorType: "EMPLOYEE",
         entity: "SHIFT",

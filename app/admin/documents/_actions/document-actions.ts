@@ -3,6 +3,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { requireOrganizationId } from "@/lib/auth";
 import type { Visibility, UploadedBy } from "@prisma/client";
 import type { DocumentType } from "@/lib/document-types";
 
@@ -24,6 +25,8 @@ type CreateDocumentInput = {
 // ========================================
 
 export async function createDocument(input: CreateDocumentInput) {
+  const organizationId = await requireOrganizationId();
+
   try {
     const document = await prisma.employeeDocument.create({
       data: {
@@ -32,6 +35,7 @@ export async function createDocument(input: CreateDocumentInput) {
         fileUrl: input.fileUrl,
         visibility: input.visibility ?? "EMPLOYER_ONLY",
         uploadedBy: input.uploadedBy,
+        organizationId,
       },
     });
 
@@ -45,10 +49,15 @@ export async function createDocument(input: CreateDocumentInput) {
 }
 
 export async function deleteDocument(id: string) {
+  const organizationId = await requireOrganizationId();
+
   try {
-    // Get document to get the fileUrl for Cloudinary deletion
-    const document = await prisma.employeeDocument.findUnique({
-      where: { id },
+    // Get document to verify organization ownership
+    const document = await prisma.employeeDocument.findFirst({
+      where: {
+        id,
+        organizationId,
+      },
     });
 
     if (!document) {
@@ -76,7 +85,21 @@ export async function updateDocumentVisibility(
   id: string,
   visibility: Visibility
 ) {
+  const organizationId = await requireOrganizationId();
+
   try {
+    // Verify document belongs to this organization
+    const document = await prisma.employeeDocument.findFirst({
+      where: {
+        id,
+        organizationId,
+      },
+    });
+
+    if (!document) {
+      return { success: false, error: "מסמך לא נמצא" };
+    }
+
     await prisma.employeeDocument.update({
       where: { id },
       data: { visibility },
@@ -92,8 +115,13 @@ export async function updateDocumentVisibility(
 }
 
 export async function getEmployeeDocuments(employeeId: string) {
+  const organizationId = await requireOrganizationId();
+
   const documents = await prisma.employeeDocument.findMany({
-    where: { employeeId },
+    where: {
+      employeeId,
+      organizationId,
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -101,7 +129,12 @@ export async function getEmployeeDocuments(employeeId: string) {
 }
 
 export async function getAllDocuments() {
+  const organizationId = await requireOrganizationId();
+
   const documents = await prisma.employeeDocument.findMany({
+    where: {
+      organizationId,
+    },
     include: {
       employee: {
         select: {

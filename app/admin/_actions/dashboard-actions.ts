@@ -2,6 +2,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { requireOrganizationId } from "@/lib/auth";
 import {
   startOfDay,
   endOfDay,
@@ -63,6 +64,7 @@ export type TopEmployee = {
 // ========================================
 
 export async function getDashboardStats(): Promise<DashboardStats> {
+  const organizationId = await requireOrganizationId();
   const now = new Date();
   const todayStart = startOfDay(now);
   const todayEnd = endOfDay(now);
@@ -76,9 +78,9 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   // Employee stats
   const [totalEmployees, activeEmployees, blockedEmployees] = await Promise.all(
     [
-      prisma.employee.count(),
-      prisma.employee.count({ where: { status: "ACTIVE" } }),
-      prisma.employee.count({ where: { status: "BLOCKED" } }),
+      prisma.employee.count({ where: { organizationId } }),
+      prisma.employee.count({ where: { organizationId, status: "ACTIVE" } }),
+      prisma.employee.count({ where: { organizationId, status: "BLOCKED" } }),
     ]
   );
 
@@ -87,18 +89,21 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     await Promise.all([
       prisma.shift.count({
         where: {
+          organizationId,
           status: "OPEN",
           startTime: { gte: todayStart, lte: todayEnd },
         },
       }),
-      prisma.shift.count({ where: { status: "PENDING_APPROVAL" } }),
+      prisma.shift.count({ where: { organizationId, status: "PENDING_APPROVAL" } }),
       prisma.shift.count({
         where: {
+          organizationId,
           startTime: { gte: weekStart, lte: weekEnd },
         },
       }),
       prisma.shift.count({
         where: {
+          organizationId,
           startTime: { gte: monthStart, lte: monthEnd },
         },
       }),
@@ -113,13 +118,14 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     scheduledTasks,
     recurringTasks,
   ] = await Promise.all([
-    prisma.task.count({ where: { isTemplate: false } }),
+    prisma.task.count({ where: { organizationId, isTemplate: false } }),
     prisma.task.count({
-      where: { status: "OPEN", isVisible: true, isTemplate: false },
+      where: { organizationId, status: "OPEN", isVisible: true, isTemplate: false },
     }),
-    prisma.task.count({ where: { status: "COMPLETED" } }),
+    prisma.task.count({ where: { organizationId, status: "COMPLETED" } }),
     prisma.task.count({
       where: {
+        organizationId,
         status: "OPEN",
         isVisible: true,
         isTemplate: false,
@@ -128,12 +134,13 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     }),
     prisma.task.count({
       where: {
+        organizationId,
         isVisible: false,
         scheduledDate: { not: null },
         isTemplate: false,
       },
     }),
-    prisma.task.count({ where: { isTemplate: true } }),
+    prisma.task.count({ where: { organizationId, isTemplate: true } }),
   ]);
 
   // Hours calculation
@@ -141,6 +148,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     await Promise.all([
       prisma.shift.findMany({
         where: {
+          organizationId,
           startTime: { gte: weekStart, lte: weekEnd },
           endTime: { not: null },
         },
@@ -148,6 +156,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       }),
       prisma.shift.findMany({
         where: {
+          organizationId,
           startTime: { gte: monthStart, lte: monthEnd },
           endTime: { not: null },
         },
@@ -155,6 +164,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       }),
       prisma.shift.findMany({
         where: {
+          organizationId,
           startTime: { gte: lastMonthStart, lte: lastMonthEnd },
           endTime: { not: null },
         },
@@ -204,11 +214,13 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 export async function getRecentActivity(
   limit: number = 10
 ): Promise<RecentActivity[]> {
+  const organizationId = await requireOrganizationId();
   const activities: RecentActivity[] = [];
 
   // Get recent shifts (started/ended)
   const recentShifts = await prisma.shift.findMany({
     where: {
+      organizationId,
       OR: [{ status: "OPEN" }, { status: "CLOSED" }],
     },
     include: {
@@ -241,6 +253,7 @@ export async function getRecentActivity(
   // Get recent completed tasks
   const recentCompletedTasks = await prisma.task.findMany({
     where: {
+      organizationId,
       status: "COMPLETED",
       completedAt: { not: null },
     },
@@ -265,6 +278,7 @@ export async function getRecentActivity(
 
   // Get recently added employees
   const recentEmployees = await prisma.employee.findMany({
+    where: { organizationId },
     orderBy: { createdAt: "desc" },
     take: 5,
     select: { id: true, fullName: true, createdAt: true },
@@ -287,12 +301,16 @@ export async function getRecentActivity(
 }
 
 export async function getTopEmployees(limit: number = 5): Promise<TopEmployee[]> {
+  const organizationId = await requireOrganizationId();
   const monthStart = startOfMonth(new Date());
   const monthEnd = endOfMonth(new Date());
 
   // Get all active employees with their shifts and completed tasks this month
   const employees = await prisma.employee.findMany({
-    where: { status: "ACTIVE" },
+    where: {
+      organizationId,
+      status: "ACTIVE"
+    },
     include: {
       shifts: {
         where: {

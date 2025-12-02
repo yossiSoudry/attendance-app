@@ -22,6 +22,11 @@ export async function clockIn(workTypeId?: string): Promise<ClockInResult> {
 
   const employee = await prisma.employee.findUnique({
     where: { id: employeeId },
+    select: {
+      id: true,
+      status: true,
+      organizationId: true,
+    },
   });
 
   if (!employee) {
@@ -39,6 +44,7 @@ export async function clockIn(workTypeId?: string): Promise<ClockInResult> {
   // Check for existing open shift
   const existingOpen = await prisma.shift.findFirst({
     where: {
+      organizationId: employee.organizationId,
       employeeId: employee.id,
       status: "OPEN" as ShiftStatus,
     },
@@ -54,7 +60,10 @@ export async function clockIn(workTypeId?: string): Promise<ClockInResult> {
   // Validate workTypeId if provided
   if (workTypeId) {
     const workType = await prisma.workType.findUnique({
-      where: { id: workTypeId },
+      where: {
+        id: workTypeId,
+        organizationId: employee.organizationId,
+      },
     });
 
     if (!workType) {
@@ -69,6 +78,7 @@ export async function clockIn(workTypeId?: string): Promise<ClockInResult> {
 
   const shift = await prisma.shift.create({
     data: {
+      organizationId: employee.organizationId,
       employeeId: employee.id,
       workTypeId: workTypeId || null,
       status: "OPEN" as ShiftStatus,
@@ -79,6 +89,7 @@ export async function clockIn(workTypeId?: string): Promise<ClockInResult> {
 
   await prisma.timeEvent.create({
     data: {
+      organizationId: employee.organizationId,
       employeeId: employee.id,
       shiftId: shift.id,
       eventType: "CLOCK_IN" as TimeEventType,
@@ -105,6 +116,10 @@ export async function clockOut(): Promise<ClockInResult> {
 
   const employee = await prisma.employee.findUnique({
     where: { id: employeeId },
+    select: {
+      id: true,
+      organizationId: true,
+    },
   });
 
   if (!employee) {
@@ -114,6 +129,7 @@ export async function clockOut(): Promise<ClockInResult> {
 
   const openShift = await prisma.shift.findFirst({
     where: {
+      organizationId: employee.organizationId,
       employeeId: employee.id,
       status: "OPEN" as ShiftStatus,
     },
@@ -139,6 +155,7 @@ export async function clockOut(): Promise<ClockInResult> {
 
   await prisma.timeEvent.create({
     data: {
+      organizationId: employee.organizationId,
       employeeId: employee.id,
       shiftId: openShift.id,
       eventType: "CLOCK_OUT" as TimeEventType,
@@ -163,11 +180,22 @@ export async function getWorkTypesForEmployee() {
     return [];
   }
 
+  // Get employee's organizationId
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    select: { organizationId: true },
+  });
+
+  if (!employee) {
+    return [];
+  }
+
   // Get work types that are either:
   // 1. Default work type (available to all employees)
   // 2. Assigned to this employee via EmployeeWorkRate
   const workTypes = await prisma.workType.findMany({
     where: {
+      organizationId: employee.organizationId,
       OR: [
         { isDefault: true },
         {

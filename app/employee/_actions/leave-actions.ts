@@ -98,6 +98,19 @@ export async function createLeaveRequest(
     };
   }
 
+  // Get employee's organizationId
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    select: { organizationId: true },
+  });
+
+  if (!employee) {
+    return {
+      success: false,
+      message: "עובד לא נמצא",
+    };
+  }
+
   const rawData = {
     leaveType: formData.get("leaveType") as string,
     startDate: formData.get("startDate") as string,
@@ -136,6 +149,7 @@ export async function createLeaveRequest(
   // Check for overlapping requests
   const overlapping = await prisma.leaveRequest.findFirst({
     where: {
+      organizationId: employee.organizationId,
       employeeId,
       status: { in: ["PENDING", "APPROVED", "PARTIALLY_APPROVED"] },
       OR: [
@@ -159,6 +173,7 @@ export async function createLeaveRequest(
 
   await prisma.leaveRequest.create({
     data: {
+      organizationId: employee.organizationId,
       employeeId,
       leaveType: leaveType as "VACATION" | "SICK",
       startDate: startDateObj,
@@ -187,8 +202,21 @@ export async function getMyLeaveRequests(): Promise<LeaveRequestWithEmployee[]> 
     return [];
   }
 
+  // Get employee's organizationId
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    select: { organizationId: true },
+  });
+
+  if (!employee) {
+    return [];
+  }
+
   const requests = await prisma.leaveRequest.findMany({
-    where: { employeeId },
+    where: {
+      organizationId: employee.organizationId,
+      employeeId,
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -225,8 +253,24 @@ export async function cancelLeaveRequest(
     };
   }
 
+  // Get employee's organizationId
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    select: { organizationId: true },
+  });
+
+  if (!employee) {
+    return {
+      success: false,
+      message: "עובד לא נמצא",
+    };
+  }
+
   const request = await prisma.leaveRequest.findUnique({
-    where: { id: requestId },
+    where: {
+      id: requestId,
+      organizationId: employee.organizationId,
+    },
   });
 
   if (!request) {

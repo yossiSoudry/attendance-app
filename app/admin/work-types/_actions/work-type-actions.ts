@@ -8,6 +8,7 @@ import {
   type WorkTypeFormValues,
 } from "@/lib/validations/work-type";
 import type { ActorType } from "@/types/prisma";
+import { requireOrganizationId } from "@/lib/auth";
 
 export type ActionResult = {
   success: boolean;
@@ -18,6 +19,8 @@ export type ActionResult = {
 export async function createWorkType(
   data: WorkTypeFormValues
 ): Promise<ActionResult> {
+  const organizationId = await requireOrganizationId();
+
   const parsed = workTypeFormSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -33,13 +36,14 @@ export async function createWorkType(
   // אם זה ברירת מחדל חדשה, בטל את הקודמת
   if (isDefault) {
     await prisma.workType.updateMany({
-      where: { isDefault: true },
+      where: { organizationId, isDefault: true },
       data: { isDefault: false },
     });
   }
 
   const workType = await prisma.workType.create({
     data: {
+      organizationId,
       name,
       description: description || null,
       isDefault,
@@ -51,6 +55,7 @@ export async function createWorkType(
   // רישום ב-AuditLog
   await prisma.auditLog.create({
     data: {
+      organizationId,
       actorType: "MANAGER" as ActorType,
       entity: "WORK_TYPE",
       entityId: workType.id,
@@ -77,6 +82,8 @@ export async function updateWorkType(
   id: string,
   data: WorkTypeFormValues
 ): Promise<ActionResult> {
+  const organizationId = await requireOrganizationId();
+
   const parsed = workTypeFormSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -89,8 +96,8 @@ export async function updateWorkType(
 
   const { name, description, isDefault, rateType, rateValue } = parsed.data;
 
-  const existing = await prisma.workType.findUnique({
-    where: { id },
+  const existing = await prisma.workType.findFirst({
+    where: { id, organizationId },
   });
 
   if (!existing) {
@@ -111,7 +118,7 @@ export async function updateWorkType(
   // אם זה ברירת מחדל חדשה, בטל את הקודמת
   if (isDefault && !existing.isDefault) {
     await prisma.workType.updateMany({
-      where: { isDefault: true },
+      where: { organizationId, isDefault: true },
       data: { isDefault: false },
     });
   }
@@ -130,6 +137,7 @@ export async function updateWorkType(
   // רישום ב-AuditLog
   await prisma.auditLog.create({
     data: {
+      organizationId,
       actorType: "MANAGER" as ActorType,
       entity: "WORK_TYPE",
       entityId: id,
@@ -154,8 +162,10 @@ export async function updateWorkType(
 }
 
 export async function deleteWorkType(id: string): Promise<ActionResult> {
-  const existing = await prisma.workType.findUnique({
-    where: { id },
+  const organizationId = await requireOrganizationId();
+
+  const existing = await prisma.workType.findFirst({
+    where: { id, organizationId },
     include: {
       _count: {
         select: {
@@ -199,6 +209,7 @@ export async function deleteWorkType(id: string): Promise<ActionResult> {
   // רישום ב-AuditLog
   await prisma.auditLog.create({
     data: {
+      organizationId,
       actorType: "MANAGER" as ActorType,
       entity: "WORK_TYPE",
       entityId: id,

@@ -28,8 +28,19 @@ export type EmployeeTask = {
 // ========================================
 
 export async function getEmployeeTasks(employeeId: string): Promise<EmployeeTask[]> {
+  // Get employee's organizationId
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    select: { organizationId: true },
+  });
+
+  if (!employee) {
+    return [];
+  }
+
   const tasks = await prisma.task.findMany({
     where: {
+      organizationId: employee.organizationId,
       employeeId,
       isVisible: true,      // Only show visible tasks
       isTemplate: false,    // Don't show recurring templates
@@ -71,6 +82,7 @@ export async function completeTask(
       select: {
         requiresDocumentUpload: true,
         attachedDocumentId: true,
+        organizationId: true,
       },
     });
 
@@ -121,8 +133,19 @@ export async function updateEmployeeNote(
 }
 
 export async function getEmployeeOpenTasksCount(employeeId: string): Promise<number> {
+  // Get employee's organizationId
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    select: { organizationId: true },
+  });
+
+  if (!employee) {
+    return 0;
+  }
+
   return prisma.task.count({
     where: {
+      organizationId: employee.organizationId,
       employeeId,
       status: "OPEN",
       isVisible: true,
@@ -137,9 +160,20 @@ export async function attachDocumentToTask(
   fileUrl: string
 ) {
   try {
+    // Get employee's organizationId
+    const employee = await prisma.employee.findUnique({
+      where: { id: employeeId },
+      select: { organizationId: true },
+    });
+
+    if (!employee) {
+      return { success: false, error: "עובד לא נמצא" };
+    }
+
     // Create the document
     const document = await prisma.employeeDocument.create({
       data: {
+        organizationId: employee.organizationId,
         employeeId,
         docType: "TASK_ATTACHMENT",
         fileUrl,

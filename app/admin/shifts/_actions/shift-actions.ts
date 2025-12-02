@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { shiftFormSchema, type ShiftFormValues } from "@/lib/validations/shift";
 import type { ActorType, ShiftStatus } from "@/types/prisma";
+import { requireOrganizationId } from "@/lib/auth";
 
 export type ActionResult = {
   success: boolean;
@@ -20,6 +21,8 @@ function combineDateAndTime(date: Date, time: string): Date {
 }
 
 export async function createShift(data: ShiftFormValues): Promise<ActionResult> {
+  const organizationId = await requireOrganizationId();
+
   const parsed = shiftFormSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -46,6 +49,7 @@ export async function createShift(data: ShiftFormValues): Promise<ActionResult> 
 
   const shift = await prisma.shift.create({
     data: {
+      organizationId,
       employeeId,
       workTypeId: workTypeId || null,
       startTime: startDateTime,
@@ -60,6 +64,7 @@ export async function createShift(data: ShiftFormValues): Promise<ActionResult> 
   // רישום ב-AuditLog
   await prisma.auditLog.create({
     data: {
+      organizationId,
       actorType: "MANAGER" as ActorType,
       entity: "SHIFT",
       entityId: shift.id,
@@ -85,6 +90,8 @@ export async function updateShift(
   id: string,
   data: ShiftFormValues
 ): Promise<ActionResult> {
+  const organizationId = await requireOrganizationId();
+
   const parsed = shiftFormSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -109,8 +116,8 @@ export async function updateShift(
     };
   }
 
-  const existing = await prisma.shift.findUnique({
-    where: { id },
+  const existing = await prisma.shift.findFirst({
+    where: { id, organizationId },
   });
 
   if (!existing) {
@@ -142,6 +149,7 @@ export async function updateShift(
   // רישום ב-AuditLog
   await prisma.auditLog.create({
     data: {
+      organizationId,
       actorType: "MANAGER" as ActorType,
       entity: "SHIFT",
       entityId: id,
@@ -166,8 +174,10 @@ export async function updateShift(
 }
 
 export async function deleteShift(id: string): Promise<ActionResult> {
-  const existing = await prisma.shift.findUnique({
-    where: { id },
+  const organizationId = await requireOrganizationId();
+
+  const existing = await prisma.shift.findFirst({
+    where: { id, organizationId },
   });
 
   if (!existing) {
@@ -191,6 +201,7 @@ export async function deleteShift(id: string): Promise<ActionResult> {
   // רישום ב-AuditLog
   await prisma.auditLog.create({
     data: {
+      organizationId,
       actorType: "MANAGER" as ActorType,
       entity: "SHIFT",
       entityId: id,

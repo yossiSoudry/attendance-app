@@ -9,7 +9,83 @@ datasource db {
   url      = env("DATABASE_PRISMA_DATABASE_URL")
 }
 
+// ========================================
+// Organization (Multi-tenant) Enums
+// ========================================
 
+enum OrganizationStatus {
+  ACTIVE
+  SUSPENDED
+  TRIAL
+}
+
+enum OrganizationPlan {
+  FREE
+  BASIC
+  PREMIUM
+  ENTERPRISE
+}
+
+// ========================================
+// Platform Admin (System Owner)
+// ========================================
+
+model PlatformAdmin {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  password  String   // hashed password
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+}
+
+// ========================================
+// Organization (Company/Tenant)
+// ========================================
+
+model Organization {
+  id          String             @id @default(uuid()) @db.Uuid
+  name        String             // שם החברה
+  email       String             @unique // אימייל ראשי
+  legalName   String?            // שם משפטי לחשבוניות
+  taxId       String?            // ח.פ. / מספר עוסק
+  logoUrl     String?            // לוגו החברה
+  status      OrganizationStatus @default(TRIAL)
+  plan        OrganizationPlan   @default(FREE)
+
+  // Trial/Subscription info
+  trialEndsAt   DateTime?
+  subscribedAt  DateTime?
+
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  // Relations
+  departments     Department[]
+  admins          AdminUser[]
+  invitations     AdminInvitation[]
+  employees       Employee[]
+  workTypes       WorkType[]
+  workRules       OrganizationWorkRules?
+  employeeBonuses EmployeeBonus[]
+  tasks           Task[]
+  documentRequests DocumentRequest[]
+  employeeDocuments EmployeeDocument[]
+  shifts          Shift[]
+  timeEvents      TimeEvent[]
+  devices         Device[]
+  auditLogs       AuditLog[]
+  leaveRequests   LeaveRequest[]
+
+  @@index([email])
+  @@index([status])
+}
+
+// ========================================
+// Existing Enums
+// ========================================
 
 enum EmployeeStatus {
   ACTIVE
@@ -118,36 +194,43 @@ enum LeaveStatus {
 }
 
 model Department {
-  id          String   @id @default(uuid()) @db.Uuid
-  name        String   @unique
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  name           String
+  description    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
-  admins    AdminUser[]
-  employees Employee[]
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  admins       AdminUser[]
+  employees    Employee[]
+
+  @@unique([organizationId, name]) // שם מחלקה ייחודי בתוך ארגון
+  @@index([organizationId])
 }
 
 model AdminUser {
-  id            String      @id @default(uuid()) @db.Uuid
-  email         String      @unique
-  password      String?     // hashed password - null if using OAuth only
-  name          String
-  role          AdminRole   @default(MANAGER)
-  status        AdminStatus @default(ACTIVE)
-  departmentId  String?     @db.Uuid
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  email          String       @unique
+  password       String?      // hashed password - null if using OAuth only
+  name           String
+  role           AdminRole    @default(MANAGER)
+  status         AdminStatus  @default(ACTIVE)
+  departmentId   String?      @db.Uuid
 
   // OAuth fields
-  googleId      String?     @unique
-  image         String?
+  googleId       String?      @unique
+  image          String?
 
   // Invitation fields
-  invitedById   String?     @db.Uuid
-  invitedAt     DateTime?
+  invitedById    String?      @db.Uuid
+  invitedAt      DateTime?
 
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
+  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   department    Department?  @relation(fields: [departmentId], references: [id])
   invitedBy     AdminUser?   @relation("AdminInvitations", fields: [invitedById], references: [id])
   invitees      AdminUser[]  @relation("AdminInvitations")
@@ -158,30 +241,36 @@ model AdminUser {
   // Leave requests approved/rejected by this admin
   approvedLeaveRequests LeaveRequest[] @relation("ApprovedLeaveRequests")
 
+  @@index([organizationId])
   @@index([email])
   @@index([departmentId])
 }
 
 model AdminInvitation {
-  id          String    @id @default(uuid()) @db.Uuid
-  email       String    @unique
-  role        AdminRole @default(MANAGER)
-  departmentId String?  @db.Uuid
-  token       String    @unique
-  expiresAt   DateTime
-  invitedById String    @db.Uuid
-  createdAt   DateTime  @default(now())
-  usedAt      DateTime?
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  email          String       @unique
+  role           AdminRole    @default(MANAGER)
+  departmentId   String?      @db.Uuid
+  token          String       @unique
+  expiresAt      DateTime
+  invitedById    String       @db.Uuid
+  createdAt      DateTime     @default(now())
+  usedAt         DateTime?
 
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
   @@index([token])
   @@index([email])
 }
 
 model Employee {
   id              String              @id @default(uuid()) @db.Uuid
-  employeeNumber  Int                 @unique @default(autoincrement())
+  organizationId  String              @db.Uuid
+  employeeNumber  Int                 @default(autoincrement())
   fullName        String
-  nationalId      String              @unique
+  nationalId      String
   status          EmployeeStatus      @default(ACTIVE)
 
   // Employment type and rates
@@ -199,6 +288,7 @@ model Employee {
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
 
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   department       Department?        @relation(fields: [departmentId], references: [id])
   workRates        EmployeeWorkRate[]
   shifts           Shift[]
@@ -210,24 +300,32 @@ model Employee {
   devices          Device[]
   leaveRequests    LeaveRequest[]
 
+  @@unique([organizationId, employeeNumber]) // מספר עובד ייחודי בתוך ארגון
+  @@unique([organizationId, nationalId])     // ת.ז. ייחודית בתוך ארגון
+  @@index([organizationId])
   @@index([departmentId])
 }
 
 model WorkType {
-  id          String             @id @default(uuid()) @db.Uuid
-  name        String
-  description String?
-  isDefault   Boolean            @default(false)
+  id             String             @id @default(uuid()) @db.Uuid
+  organizationId String             @db.Uuid
+  name           String
+  description    String?
+  isDefault      Boolean            @default(false)
 
   // Rate configuration
-  rateType    WorkTypeRateType   @default(BASE_RATE)
-  rateValue   Int                @default(0)  // agorot for FIXED/BONUS_FIXED, percent*100 for BONUS_PERCENT (e.g., 2500 = 25%)
+  rateType       WorkTypeRateType   @default(BASE_RATE)
+  rateValue      Int                @default(0)  // agorot for FIXED/BONUS_FIXED, percent*100 for BONUS_PERCENT (e.g., 2500 = 25%)
 
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
+  organization  Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   employeeRates EmployeeWorkRate[]
   shifts        Shift[]
+
+  @@unique([organizationId, name]) // שם סוג עבודה ייחודי בתוך ארגון
+  @@index([organizationId])
 }
 
 model EmployeeWorkRate {
@@ -245,50 +343,57 @@ model EmployeeWorkRate {
 }
 
 model Shift {
-  id            String        @id @default(uuid()) @db.Uuid
-  employeeId    String        @db.Uuid
-  workTypeId    String?       @db.Uuid
-  startTime     DateTime
-  endTime       DateTime?
-  status        ShiftStatus   @default(OPEN)
-  source        String        @default("web") // "mobile" / "web" / "import"
-  isManual      Boolean       @default(false)
-  notesEmployee String?
-  notesManager  String?
-  isRetro       Boolean       @default(false)
-  approvedById  String?       @db.Uuid
-  approvedAt    DateTime?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String        @db.Uuid
+  employeeId     String        @db.Uuid
+  workTypeId     String?       @db.Uuid
+  startTime      DateTime
+  endTime        DateTime?
+  status         ShiftStatus   @default(OPEN)
+  source         String        @default("web") // "mobile" / "web" / "import"
+  isManual       Boolean       @default(false)
+  notesEmployee  String?
+  notesManager   String?
+  isRetro        Boolean       @default(false)
+  approvedById   String?       @db.Uuid
+  approvedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
-  employee   Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  workType   WorkType?  @relation(fields: [workTypeId], references: [id])
-  approvedBy AdminUser? @relation("ApprovedShifts", fields: [approvedById], references: [id])
-  timeEvents TimeEvent[]
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee     Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  workType     WorkType?    @relation(fields: [workTypeId], references: [id])
+  approvedBy   AdminUser?   @relation("ApprovedShifts", fields: [approvedById], references: [id])
+  timeEvents   TimeEvent[]
 
+  @@index([organizationId])
   @@index([employeeId, startTime])
 }
 
 model TimeEvent {
-  id         String        @id @default(uuid()) @db.Uuid
-  employeeId String        @db.Uuid
-  shiftId    String?       @db.Uuid
-  eventType  TimeEventType
-  createdBy  ActorType
-  time       DateTime
-  geoLat     Float?
-  geoLng     Float?
-  deviceId   String?       @db.Uuid
-  createdAt  DateTime      @default(now())
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String        @db.Uuid
+  employeeId     String        @db.Uuid
+  shiftId        String?       @db.Uuid
+  eventType      TimeEventType
+  createdBy      ActorType
+  time           DateTime
+  geoLat         Float?
+  geoLng         Float?
+  deviceId       String?       @db.Uuid
+  createdAt      DateTime      @default(now())
 
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  shift    Shift?   @relation(fields: [shiftId], references: [id])
-  device   Device?  @relation(fields: [deviceId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee     Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  shift        Shift?       @relation(fields: [shiftId], references: [id])
+  device       Device?      @relation(fields: [deviceId], references: [id])
 
+  @@index([organizationId])
   @@index([employeeId, time])
   @@index([shiftId])
 }
 
+// WorkRules הגלובלי - נשמר לתאימות לאחור (יימחק בעתיד)
 model WorkRules {
   id                        Int      @id @default(1)
   dailyStandardHours        Float    @default(8)
@@ -299,6 +404,22 @@ model WorkRules {
   maxDailyHours             Float    @default(12)
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
+}
+
+// כללי עבודה לכל ארגון
+model OrganizationWorkRules {
+  id                        String   @id @default(uuid()) @db.Uuid
+  organizationId            String   @unique @db.Uuid
+  dailyStandardHours        Float    @default(8)
+  weeklyStandardHours       Float    @default(42)
+  overtimeFirstRate         Float    @default(1.25)
+  overtimeFirstHoursPerDay  Float    @default(2)
+  overtimeSecondRate        Float    @default(1.5)
+  maxDailyHours             Float    @default(12)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 }
 
 model CalendarEvent {
@@ -317,19 +438,22 @@ model CalendarEvent {
 }
 
 model EmployeeBonus {
-  id            String     @id @default(uuid()) @db.Uuid
-  employeeId    String     @db.Uuid
-  bonusType     BonusType
-  amountPerHour Int?
-  amountFixed   Int?
-  validFrom     DateTime?
-  validTo       DateTime?
-  description   String?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id             String     @id @default(uuid()) @db.Uuid
+  organizationId String     @db.Uuid
+  employeeId     String     @db.Uuid
+  bonusType      BonusType
+  amountPerHour  Int?
+  amountFixed    Int?
+  validFrom      DateTime?
+  validTo        DateTime?
+  description    String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee     Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
+  @@index([organizationId])
   @@index([employeeId])
 }
 
@@ -345,6 +469,7 @@ enum RecurrenceType {
 
 model Task {
   id                     String            @id @default(uuid()) @db.Uuid
+  organizationId         String            @db.Uuid
   employeeId             String            @db.Uuid
   title                  String
   description            String?
@@ -370,11 +495,13 @@ model Task {
   templateId             String?           @db.Uuid        // Links instance to its template
   lastGeneratedDate      DateTime?         // Last date an instance was generated from this template
 
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   employee         Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   attachedDocument EmployeeDocument? @relation(fields: [attachedDocumentId], references: [id])
   template         Task?             @relation("TaskTemplate", fields: [templateId], references: [id])
   instances        Task[]            @relation("TaskTemplate")
 
+  @@index([organizationId])
   @@index([employeeId, status])
   @@index([isTemplate, recurrenceType])
   @@index([scheduledDate, isVisible])
@@ -382,6 +509,7 @@ model Task {
 
 model DocumentRequest {
   id                String          @id @default(uuid()) @db.Uuid
+  organizationId    String          @db.Uuid
   employeeId        String          @db.Uuid
   title             String
   description       String?
@@ -391,53 +519,65 @@ model DocumentRequest {
   completedAt       DateTime?
   relatedDocumentId String?         @db.Uuid
 
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   employee        Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   relatedDocument EmployeeDocument? @relation(fields: [relatedDocumentId], references: [id])
 
+  @@index([organizationId])
   @@index([employeeId, status])
 }
 
 model EmployeeDocument {
-  id         String           @id @default(uuid()) @db.Uuid
-  employeeId String           @db.Uuid
-  docType    String
-  fileUrl    String
-  visibility Visibility       @default(EMPLOYER_ONLY)
-  uploadedBy UploadedBy
-  createdAt  DateTime         @default(now())
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @db.Uuid
+  employeeId     String           @db.Uuid
+  docType        String
+  fileUrl        String
+  visibility     Visibility       @default(EMPLOYER_ONLY)
+  uploadedBy     UploadedBy
+  createdAt      DateTime         @default(now())
 
-  employee Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  requests DocumentRequest[]
-  tasks    Task[]
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee     Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  requests     DocumentRequest[]
+  tasks        Task[]
 
+  @@index([organizationId])
   @@index([employeeId])
 }
 
 model Device {
-  id            String      @id @default(uuid()) @db.Uuid
-  employeeId    String      @db.Uuid
-  platform      Platform
-  expoPushToken String?
-  lastSeenAt    DateTime?
-  createdAt     DateTime    @default(now())
+  id             String      @id @default(uuid()) @db.Uuid
+  organizationId String      @db.Uuid
+  employeeId     String      @db.Uuid
+  platform       Platform
+  expoPushToken  String?
+  lastSeenAt     DateTime?
+  createdAt      DateTime    @default(now())
 
-  employee   Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  timeEvents TimeEvent[]
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee     Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  timeEvents   TimeEvent[]
 
+  @@index([organizationId])
   @@index([employeeId])
 }
 
 model AuditLog {
-  id        String   @id @default(uuid()) @db.Uuid
-  actorId   String?  @db.Uuid
-  actorType ActorType
-  entity    String   // "SHIFT" / "EMPLOYEE" / "BONUS" / etc.
-  entityId  String   @db.Uuid
-  action    String   // "CREATE" / "UPDATE" / "DELETE"
-  before    Json?
-  after     Json?
-  createdAt DateTime @default(now())
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @db.Uuid
+  actorId        String?   @db.Uuid
+  actorType      ActorType
+  entity         String    // "SHIFT" / "EMPLOYEE" / "BONUS" / etc.
+  entityId       String    @db.Uuid
+  action         String    // "CREATE" / "UPDATE" / "DELETE"
+  before         Json?
+  after          Json?
+  createdAt      DateTime  @default(now())
 
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
   @@index([entity, entityId])
   @@index([actorId])
   @@index([createdAt])
@@ -446,6 +586,7 @@ model AuditLog {
 // בקשת חופשה/מחלה
 model LeaveRequest {
   id              String       @id @default(uuid()) @db.Uuid
+  organizationId  String       @db.Uuid
   employeeId      String       @db.Uuid
   leaveType       LeaveType
   status          LeaveStatus  @default(PENDING)
@@ -471,9 +612,11 @@ model LeaveRequest {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   employee        Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   approvedBy      AdminUser?   @relation("ApprovedLeaveRequests", fields: [approvedById], references: [id])
 
+  @@index([organizationId])
   @@index([employeeId, status])
   @@index([startDate, endDate])
 }

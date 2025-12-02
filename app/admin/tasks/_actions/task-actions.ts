@@ -3,6 +3,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { requireOrganizationId } from "@/lib/auth";
 import type { TaskStatus, RecurrenceType } from "@prisma/client";
 import type { TaskFormValues, RecurrenceTypeValue } from "@/lib/validations/task";
 
@@ -39,6 +40,7 @@ export type TaskWithEmployee = {
 
 export async function createTask(input: TaskFormValues) {
   try {
+    const organizationId = await requireOrganizationId();
     const hasScheduling = input.scheduledDate || input.recurrenceType !== "NONE";
     const isRecurring = input.recurrenceType !== "NONE";
 
@@ -47,6 +49,7 @@ export async function createTask(input: TaskFormValues) {
 
     const task = await prisma.task.create({
       data: {
+        organizationId,
         employeeId: input.employeeId,
         title: input.title,
         description: input.description || null,
@@ -80,6 +83,17 @@ export async function updateTask(
   input: Partial<TaskFormValues> & { status?: TaskStatus }
 ) {
   try {
+    const organizationId = await requireOrganizationId();
+
+    // Verify task belongs to organization
+    const task = await prisma.task.findFirst({
+      where: { id, organizationId },
+    });
+
+    if (!task) {
+      return { success: false, error: "המשימה לא נמצאה" };
+    }
+
     const updateData: Record<string, unknown> = {};
 
     if (input.title !== undefined) updateData.title = input.title;
@@ -136,6 +150,17 @@ export async function updateTaskStatus(
   employeeNote?: string
 ) {
   try {
+    const organizationId = await requireOrganizationId();
+
+    // Verify task belongs to organization
+    const task = await prisma.task.findFirst({
+      where: { id, organizationId },
+    });
+
+    if (!task) {
+      return { success: false, error: "המשימה לא נמצאה" };
+    }
+
     const updateData: Record<string, unknown> = { status };
 
     if (status === "COMPLETED") {
@@ -162,6 +187,17 @@ export async function updateTaskStatus(
 
 export async function deleteTask(id: string) {
   try {
+    const organizationId = await requireOrganizationId();
+
+    // Verify task belongs to organization
+    const task = await prisma.task.findFirst({
+      where: { id, organizationId },
+    });
+
+    if (!task) {
+      return { success: false, error: "המשימה לא נמצאה" };
+    }
+
     await prisma.task.delete({
       where: { id },
     });
@@ -176,8 +212,11 @@ export async function deleteTask(id: string) {
 }
 
 export async function getAllTasks(): Promise<TaskWithEmployee[]> {
+  const organizationId = await requireOrganizationId();
+
   const tasks = await prisma.task.findMany({
     where: {
+      organizationId,
       // Don't show template instances that haven't been generated yet
       // Templates are shown, instances are shown only when visible
       OR: [
@@ -223,8 +262,11 @@ export async function getAllTasks(): Promise<TaskWithEmployee[]> {
 export async function getTasksByEmployee(
   employeeId: string
 ): Promise<TaskWithEmployee[]> {
+  const organizationId = await requireOrganizationId();
+
   const tasks = await prisma.task.findMany({
     where: {
+      organizationId,
       employeeId,
       OR: [
         { isTemplate: true },
@@ -265,8 +307,13 @@ export async function getTasksByEmployee(
 }
 
 export async function getTaskById(id: string): Promise<TaskWithEmployee | null> {
-  const task = await prisma.task.findUnique({
-    where: { id },
+  const organizationId = await requireOrganizationId();
+
+  const task = await prisma.task.findFirst({
+    where: {
+      id,
+      organizationId
+    },
     include: {
       employee: {
         select: {
@@ -302,8 +349,13 @@ export async function getTaskById(id: string): Promise<TaskWithEmployee | null> 
 }
 
 export async function getActiveEmployees() {
+  const organizationId = await requireOrganizationId();
+
   const employees = await prisma.employee.findMany({
-    where: { status: "ACTIVE" },
+    where: {
+      organizationId,
+      status: "ACTIVE"
+    },
     select: {
       id: true,
       fullName: true,
@@ -315,12 +367,15 @@ export async function getActiveEmployees() {
 }
 
 export async function getTasksStats() {
+  const organizationId = await requireOrganizationId();
+
   const [total, open, completed, overdue, scheduled, recurring] = await Promise.all([
-    prisma.task.count({ where: { isTemplate: false } }),
-    prisma.task.count({ where: { status: "OPEN", isVisible: true, isTemplate: false } }),
-    prisma.task.count({ where: { status: "COMPLETED" } }),
+    prisma.task.count({ where: { organizationId, isTemplate: false } }),
+    prisma.task.count({ where: { organizationId, status: "OPEN", isVisible: true, isTemplate: false } }),
+    prisma.task.count({ where: { organizationId, status: "COMPLETED" } }),
     prisma.task.count({
       where: {
+        organizationId,
         status: "OPEN",
         isVisible: true,
         isTemplate: false,
@@ -329,12 +384,13 @@ export async function getTasksStats() {
     }),
     prisma.task.count({
       where: {
+        organizationId,
         isVisible: false,
         scheduledDate: { not: null },
         isTemplate: false,
       },
     }),
-    prisma.task.count({ where: { isTemplate: true } }),
+    prisma.task.count({ where: { organizationId, isTemplate: true } }),
   ]);
 
   return { total, open, completed, overdue, scheduled, recurring };

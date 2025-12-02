@@ -13,7 +13,8 @@
       "Bash(npx prisma db pull:*)",
       "Bash(cat:*)",
       "Bash(npx shadcn@latest add:*)",
-      "Bash(dir /b \"C:\\Users\\USER\\Desktop\\projects\\attendance-app\\app\\employee\")"
+      "Bash(dir /b \"C:\\Users\\USER\\Desktop\\projects\\attendance-app\\app\\employee\")",
+      "Bash(npx prisma validate:*)"
     ],
     "deny": [],
     "ask": []

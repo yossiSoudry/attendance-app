@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { requireAdminSession, canManageAdmins, hashPassword } from "@/lib/auth";
+import { requireAdminSession, canManageAdmins, hashPassword, requireOrganizationId } from "@/lib/auth";
 import { inviteAdminSchema, registerSchema } from "@/lib/validations/admin-auth";
 import { nanoid } from "nanoid";
 import type { AdminRole } from "@prisma/client";
@@ -12,12 +12,16 @@ import type { AdminRole } from "@prisma/client";
 // =====================
 export async function getAdmins() {
   const session = await requireAdminSession();
+  const organizationId = await requireOrganizationId();
 
   if (!canManageAdmins(session.user.role)) {
     throw new Error("אין לך הרשאה לצפות ברשימת המנהלים");
   }
 
   const admins = await prisma.adminUser.findMany({
+    where: {
+      organizationId,
+    },
     select: {
       id: true,
       email: true,
@@ -56,6 +60,7 @@ export async function getAdmins() {
 // =====================
 export async function getPendingInvitations() {
   const session = await requireAdminSession();
+  const organizationId = await requireOrganizationId();
 
   if (!canManageAdmins(session.user.role)) {
     throw new Error("אין לך הרשאה לצפות בהזמנות");
@@ -63,6 +68,7 @@ export async function getPendingInvitations() {
 
   const invitations = await prisma.adminInvitation.findMany({
     where: {
+      organizationId,
       usedAt: null,
     },
     orderBy: {
@@ -78,6 +84,7 @@ export async function getPendingInvitations() {
 // =====================
 export async function inviteAdmin(input: unknown) {
   const session = await requireAdminSession();
+  const organizationId = await requireOrganizationId();
 
   if (!canManageAdmins(session.user.role)) {
     return {
@@ -106,9 +113,12 @@ export async function inviteAdmin(input: unknown) {
     };
   }
 
-  // Check if email already exists as admin
-  const existingAdmin = await prisma.adminUser.findUnique({
-    where: { email },
+  // Check if email already exists as admin in this organization
+  const existingAdmin = await prisma.adminUser.findFirst({
+    where: {
+      email,
+      organizationId,
+    },
   });
 
   if (existingAdmin) {
@@ -118,9 +128,12 @@ export async function inviteAdmin(input: unknown) {
     };
   }
 
-  // Check if invitation already exists
-  const existingInvitation = await prisma.adminInvitation.findUnique({
-    where: { email },
+  // Check if invitation already exists in this organization
+  const existingInvitation = await prisma.adminInvitation.findFirst({
+    where: {
+      email,
+      organizationId,
+    },
   });
 
   if (existingInvitation && !existingInvitation.usedAt) {
@@ -144,6 +157,7 @@ export async function inviteAdmin(input: unknown) {
       token,
       expiresAt,
       invitedById: session.user.id,
+      organizationId,
     },
   });
 
@@ -209,9 +223,12 @@ export async function registerFromInvitation(input: unknown) {
     };
   }
 
-  // Check if email already exists
-  const existingAdmin = await prisma.adminUser.findUnique({
-    where: { email },
+  // Check if email already exists in the invitation's organization
+  const existingAdmin = await prisma.adminUser.findFirst({
+    where: {
+      email,
+      organizationId: invitation.organizationId,
+    },
   });
 
   if (existingAdmin) {
@@ -235,6 +252,7 @@ export async function registerFromInvitation(input: unknown) {
         departmentId: invitation.departmentId,
         invitedById: invitation.invitedById,
         invitedAt: new Date(),
+        organizationId: invitation.organizationId,
       },
     });
 
@@ -255,6 +273,7 @@ export async function registerFromInvitation(input: unknown) {
 // =====================
 export async function updateAdminRole(adminId: string, newRole: AdminRole) {
   const session = await requireAdminSession();
+  const organizationId = await requireOrganizationId();
 
   // Only OWNER can change roles
   if (session.user.role !== "OWNER") {
@@ -272,8 +291,11 @@ export async function updateAdminRole(adminId: string, newRole: AdminRole) {
     };
   }
 
-  const admin = await prisma.adminUser.findUnique({
-    where: { id: adminId },
+  const admin = await prisma.adminUser.findFirst({
+    where: {
+      id: adminId,
+      organizationId,
+    },
   });
 
   if (!admin) {
@@ -309,6 +331,7 @@ export async function updateAdminRole(adminId: string, newRole: AdminRole) {
 // =====================
 export async function deactivateAdmin(adminId: string) {
   const session = await requireAdminSession();
+  const organizationId = await requireOrganizationId();
 
   if (!canManageAdmins(session.user.role)) {
     return {
@@ -325,8 +348,11 @@ export async function deactivateAdmin(adminId: string) {
     };
   }
 
-  const admin = await prisma.adminUser.findUnique({
-    where: { id: adminId },
+  const admin = await prisma.adminUser.findFirst({
+    where: {
+      id: adminId,
+      organizationId,
+    },
   });
 
   if (!admin) {
@@ -362,6 +388,7 @@ export async function deactivateAdmin(adminId: string) {
 // =====================
 export async function reactivateAdmin(adminId: string) {
   const session = await requireAdminSession();
+  const organizationId = await requireOrganizationId();
 
   if (!canManageAdmins(session.user.role)) {
     return {
@@ -370,8 +397,11 @@ export async function reactivateAdmin(adminId: string) {
     };
   }
 
-  const admin = await prisma.adminUser.findUnique({
-    where: { id: adminId },
+  const admin = await prisma.adminUser.findFirst({
+    where: {
+      id: adminId,
+      organizationId,
+    },
   });
 
   if (!admin) {
@@ -399,11 +429,27 @@ export async function reactivateAdmin(adminId: string) {
 // =====================
 export async function deleteInvitation(invitationId: string) {
   const session = await requireAdminSession();
+  const organizationId = await requireOrganizationId();
 
   if (!canManageAdmins(session.user.role)) {
     return {
       success: false,
       message: "אין לך הרשאה למחוק הזמנות",
+    };
+  }
+
+  // Verify invitation belongs to this organization
+  const invitation = await prisma.adminInvitation.findFirst({
+    where: {
+      id: invitationId,
+      organizationId,
+    },
+  });
+
+  if (!invitation) {
+    return {
+      success: false,
+      message: "הזמנה לא נמצאה",
     };
   }
 
@@ -423,7 +469,12 @@ export async function deleteInvitation(invitationId: string) {
 // Get departments
 // =====================
 export async function getDepartments() {
+  const organizationId = await requireOrganizationId();
+
   const departments = await prisma.department.findMany({
+    where: {
+      organizationId,
+    },
     orderBy: { name: "asc" },
   });
 
@@ -435,6 +486,7 @@ export async function getDepartments() {
 // =====================
 export async function createDepartment(name: string, description?: string) {
   const session = await requireAdminSession();
+  const organizationId = await requireOrganizationId();
 
   if (!canManageAdmins(session.user.role)) {
     return {
@@ -443,8 +495,11 @@ export async function createDepartment(name: string, description?: string) {
     };
   }
 
-  const existingDepartment = await prisma.department.findUnique({
-    where: { name },
+  const existingDepartment = await prisma.department.findFirst({
+    where: {
+      name,
+      organizationId,
+    },
   });
 
   if (existingDepartment) {
@@ -458,6 +513,7 @@ export async function createDepartment(name: string, description?: string) {
     data: {
       name,
       description,
+      organizationId,
     },
   });
 

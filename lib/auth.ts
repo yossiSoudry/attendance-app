@@ -15,12 +15,14 @@ interface ExtendedUser {
   image?: string | null;
   role: AdminRole;
   status: AdminStatus;
+  organizationId: string;
   departmentId: string | null;
 }
 
 interface ExtendedJWT extends JWT {
   id?: string;
   role?: AdminRole;
+  organizationId?: string;
   departmentId?: string | null;
 }
 
@@ -33,6 +35,7 @@ declare module "next-auth" {
       name: string;
       image?: string | null;
       role: AdminRole;
+      organizationId: string;
       departmentId: string | null;
     };
   }
@@ -101,6 +104,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           image: admin.image,
           role: admin.role,
           status: admin.status,
+          organizationId: admin.organizationId,
           departmentId: admin.departmentId,
         };
       },
@@ -156,6 +160,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         await prisma.$transaction(async (tx) => {
           await tx.adminUser.create({
             data: {
+              organizationId: invitation.organizationId,
               email: user.email!,
               name: user.name || user.email!,
               googleId: account.providerAccountId,
@@ -185,6 +190,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         extToken.id = user.id;
         extToken.role = user.role;
+        extToken.organizationId = user.organizationId;
         extToken.departmentId = user.departmentId;
       }
 
@@ -192,12 +198,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (account?.provider === "google" && !extToken.role) {
         const admin = await prisma.adminUser.findUnique({
           where: { email: token.email! },
-          select: { id: true, role: true, departmentId: true },
+          select: { id: true, role: true, organizationId: true, departmentId: true },
         });
 
         if (admin) {
           extToken.id = admin.id;
           extToken.role = admin.role;
+          extToken.organizationId = admin.organizationId;
           extToken.departmentId = admin.departmentId;
         }
       }
@@ -211,6 +218,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (extToken.id) {
         session.user.id = extToken.id;
         session.user.role = extToken.role!;
+        session.user.organizationId = extToken.organizationId!;
         session.user.departmentId = extToken.departmentId ?? null;
       }
 
@@ -249,6 +257,21 @@ export function canManageAdmins(role: AdminRole): boolean {
 // Helper function to check if user can see all employees
 export function canSeeAllEmployees(role: AdminRole): boolean {
   return role === "OWNER" || role === "ADMIN";
+}
+
+// Helper to get the current organization ID from session
+export async function getCurrentOrganizationId(): Promise<string | null> {
+  const session = await getAdminSession();
+  return session?.user.organizationId ?? null;
+}
+
+// Helper to require organization ID (throws if not found)
+export async function requireOrganizationId(): Promise<string> {
+  const session = await requireAdminSession();
+  if (!session.user.organizationId) {
+    throw new Error("Organization not found");
+  }
+  return session.user.organizationId;
 }
 
 // Helper to hash password

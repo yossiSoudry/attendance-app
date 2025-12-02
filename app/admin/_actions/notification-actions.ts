@@ -2,7 +2,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { requireAdminSession } from "@/lib/auth";
+import { requireAdminSession, requireOrganizationId } from "@/lib/auth";
 
 // ========================================
 // Types
@@ -31,6 +31,7 @@ export type NotificationItem = {
 
 export async function getNotificationCounts(): Promise<NotificationCounts> {
   await requireAdminSession();
+  const organizationId = await requireOrganizationId();
 
   const [
     pendingLeaveRequests,
@@ -41,6 +42,7 @@ export async function getNotificationCounts(): Promise<NotificationCounts> {
     // Pending vacation requests
     prisma.leaveRequest.count({
       where: {
+        organizationId,
         status: "PENDING",
         leaveType: "VACATION",
       },
@@ -48,6 +50,7 @@ export async function getNotificationCounts(): Promise<NotificationCounts> {
     // Pending sick leave requests
     prisma.leaveRequest.count({
       where: {
+        organizationId,
         status: "PENDING",
         leaveType: "SICK",
       },
@@ -55,6 +58,7 @@ export async function getNotificationCounts(): Promise<NotificationCounts> {
     // Pending retro shifts (isRetro = true and status = PENDING_APPROVAL)
     prisma.shift.count({
       where: {
+        organizationId,
         isRetro: true,
         status: "PENDING_APPROVAL",
       },
@@ -62,6 +66,7 @@ export async function getNotificationCounts(): Promise<NotificationCounts> {
     // Overdue tasks (dueDate passed and status is still OPEN)
     prisma.task.count({
       where: {
+        organizationId,
         status: "OPEN",
         dueDate: {
           lt: new Date(),
@@ -90,11 +95,15 @@ export async function getNotificationCounts(): Promise<NotificationCounts> {
 
 export async function getRecentNotifications(): Promise<NotificationItem[]> {
   await requireAdminSession();
+  const organizationId = await requireOrganizationId();
 
   const [leaveRequests, retroShifts, overdueTasks] = await Promise.all([
     // Recent pending leave requests
     prisma.leaveRequest.findMany({
-      where: { status: "PENDING" },
+      where: {
+        organizationId,
+        status: "PENDING",
+      },
       include: {
         employee: { select: { fullName: true } },
       },
@@ -104,6 +113,7 @@ export async function getRecentNotifications(): Promise<NotificationItem[]> {
     // Recent pending retro shifts
     prisma.shift.findMany({
       where: {
+        organizationId,
         isRetro: true,
         status: "PENDING_APPROVAL",
       },
@@ -116,6 +126,7 @@ export async function getRecentNotifications(): Promise<NotificationItem[]> {
     // Recent overdue tasks
     prisma.task.findMany({
       where: {
+        organizationId,
         status: "OPEN",
         dueDate: { lt: new Date() },
         isTemplate: false,

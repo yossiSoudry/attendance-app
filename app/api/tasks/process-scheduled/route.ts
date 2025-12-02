@@ -133,6 +133,7 @@ export async function POST(request: Request) {
           // Create new task instance
           await prisma.task.create({
             data: {
+              organizationId: template.organizationId,
               employeeId: template.employeeId,
               title: template.title,
               description: template.description,

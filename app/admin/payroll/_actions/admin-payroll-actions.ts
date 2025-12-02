@@ -2,6 +2,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { requireOrganizationId } from "@/lib/auth";
 import {
   calculateShiftPayroll,
   formatAgorotToShekels,
@@ -72,15 +73,15 @@ export type AdminPayrollSummary = {
 
 async function getHourlyRate(
   employeeId: string,
-  workTypeId: string | null
+  workTypeId: string | null,
+  organizationId: string
 ): Promise<number> {
   if (workTypeId) {
-    const workRate = await prisma.employeeWorkRate.findUnique({
+    // EmployeeWorkRate doesn't have organizationId directly - verify through employee
+    const workRate = await prisma.employeeWorkRate.findFirst({
       where: {
-        employeeId_workTypeId: {
-          employeeId,
-          workTypeId,
-        },
+        employeeId,
+        workTypeId,
       },
     });
 
@@ -89,17 +90,23 @@ async function getHourlyRate(
     }
   }
 
-  const employee = await prisma.employee.findUnique({
-    where: { id: employeeId },
+  const employee = await prisma.employee.findFirst({
+    where: {
+      id: employeeId,
+      organizationId,
+    },
     select: { baseHourlyRate: true },
   });
 
   return employee?.baseHourlyRate ?? 0;
 }
 
-async function getEmployeeBonuses(employeeId: string): Promise<BonusInfo[]> {
+async function getEmployeeBonuses(employeeId: string, organizationId: string): Promise<BonusInfo[]> {
   const bonuses = await prisma.employeeBonus.findMany({
-    where: { employeeId },
+    where: {
+      employeeId,
+      organizationId,
+    },
   });
 
   return bonuses.map((b) => ({
@@ -126,9 +133,14 @@ export async function getAdminMonthlyPayroll(
   year: number,
   month: number // 1-12
 ): Promise<AdminPayrollSummary> {
+  const organizationId = await requireOrganizationId();
+
   // Get employee info
-  const employee = await prisma.employee.findUnique({
-    where: { id: employeeId },
+  const employee = await prisma.employee.findFirst({
+    where: {
+      id: employeeId,
+      organizationId,
+    },
     select: { id: true, fullName: true },
   });
 
@@ -143,6 +155,7 @@ export async function getAdminMonthlyPayroll(
   const shifts = await prisma.shift.findMany({
     where: {
       employeeId,
+      organizationId,
       status: "CLOSED",
       startTime: { gte: startDate },
       endTime: { lte: endDate },
@@ -155,7 +168,7 @@ export async function getAdminMonthlyPayroll(
     orderBy: { startTime: "asc" },
   });
 
-  const bonuses = await getEmployeeBonuses(employeeId);
+  const bonuses = await getEmployeeBonuses(employeeId, organizationId);
 
   const results: AdminShiftPayroll[] = [];
 
@@ -174,7 +187,7 @@ export async function getAdminMonthlyPayroll(
   for (const shift of shifts) {
     if (!shift.endTime) continue;
 
-    const hourlyRate = await getHourlyRate(employeeId, shift.workTypeId);
+    const hourlyRate = await getHourlyRate(employeeId, shift.workTypeId, organizationId);
 
     const shiftType = determineShiftType(
       shift.startTime,
@@ -295,9 +308,12 @@ export async function getAdminMonthlyPayroll(
 export async function getAdminAvailableMonths(
   employeeId: string
 ): Promise<{ label: string; year: number; month: number }[]> {
+  const organizationId = await requireOrganizationId();
+
   const shifts = await prisma.shift.findMany({
     where: {
       employeeId,
+      organizationId,
       status: "CLOSED",
     },
     select: {
@@ -336,9 +352,14 @@ export async function getAllEmployeesMonthlyPayroll(
   year: number,
   month: number
 ): Promise<AdminPayrollSummary[]> {
+  const organizationId = await requireOrganizationId();
+
   // Get all active employees
   const employees = await prisma.employee.findMany({
-    where: { status: "ACTIVE" },
+    where: {
+      status: "ACTIVE",
+      organizationId,
+    },
     select: { id: true, fullName: true },
     orderBy: { fullName: "asc" },
   });
@@ -363,8 +384,11 @@ export async function getAllEmployeesMonthlyPayroll(
 export async function getGlobalAvailableMonths(): Promise<
   { label: string; year: number; month: number }[]
 > {
+  const organizationId = await requireOrganizationId();
+
   const shifts = await prisma.shift.findMany({
     where: {
+      organizationId,
       status: "CLOSED",
     },
     select: {

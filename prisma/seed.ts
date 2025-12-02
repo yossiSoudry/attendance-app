@@ -1,30 +1,24 @@
 // prisma/seed.ts
+// This script creates initial data for the multi-tenant system.
+// Note: For production, use scripts/create-platform-admin.ts to create the platform admin,
+// and organizations should be created through the platform admin panel.
+//
+// This seed script is primarily for development/testing purposes.
+
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // Check if there's already a default work type
-  const existingDefault = await prisma.workType.findFirst({
-    where: { isDefault: true },
-  });
-
-  if (!existingDefault) {
-    // Create default work type
-    const defaultWorkType = await prisma.workType.create({
-      data: {
-        name: "עבודה רגילה",
-        description: "סוג עבודה ברירת מחדל",
-        isDefault: true,
-        rateType: "BASE_RATE",
-        rateValue: 0,
-      },
-    });
-
-    console.log("Created default work type:", defaultWorkType.name);
-  } else {
-    console.log("Default work type already exists:", existingDefault.name);
-  }
+  console.log("Seed script is disabled for multi-tenant system.");
+  console.log("");
+  console.log("To set up the system:");
+  console.log("1. Run: npx tsx scripts/create-platform-admin.ts <email> <password> <name>");
+  console.log("   This creates the platform super admin who manages all organizations.");
+  console.log("");
+  console.log("2. Log in to /platform/login and create organizations from there.");
+  console.log("");
+  console.log("3. Each organization can then have its own admins, employees, and work types.");
 }
 
 main()

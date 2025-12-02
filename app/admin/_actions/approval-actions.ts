@@ -2,6 +2,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { requireOrganizationId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 // ========================================
@@ -32,8 +33,11 @@ export type PendingShiftDetails = {
 // ========================================
 
 export async function getPendingShifts(): Promise<PendingShiftDetails[]> {
+  const organizationId = await requireOrganizationId();
+
   const shifts = await prisma.shift.findMany({
     where: {
+      organizationId,
       status: "PENDING_APPROVAL",
     },
     include: {
@@ -92,8 +96,11 @@ export async function getPendingShifts(): Promise<PendingShiftDetails[]> {
 // ========================================
 
 export async function getPendingShiftsCount(): Promise<number> {
+  const organizationId = await requireOrganizationId();
+
   return prisma.shift.count({
     where: {
+      organizationId,
       status: "PENDING_APPROVAL",
     },
   });
@@ -109,8 +116,13 @@ export async function approveShift(
   notes?: string
 ): Promise<ActionResult> {
   try {
-    const shift = await prisma.shift.findUnique({
-      where: { id: shiftId },
+    const organizationId = await requireOrganizationId();
+
+    const shift = await prisma.shift.findFirst({
+      where: {
+        id: shiftId,
+        organizationId,
+      },
     });
 
     if (!shift) {
@@ -137,6 +149,7 @@ export async function approveShift(
     // Log to audit
     await prisma.auditLog.create({
       data: {
+        organizationId,
         actorId: managerId,
         actorType: "MANAGER",
         entity: "SHIFT",
@@ -180,12 +193,17 @@ export async function rejectShift(
   reason: string
 ): Promise<ActionResult> {
   try {
+    const organizationId = await requireOrganizationId();
+
     if (!reason || reason.trim().length === 0) {
       return { success: false, message: "יש לציין סיבת דחייה" };
     }
 
-    const shift = await prisma.shift.findUnique({
-      where: { id: shiftId },
+    const shift = await prisma.shift.findFirst({
+      where: {
+        id: shiftId,
+        organizationId,
+      },
     });
 
     if (!shift) {
@@ -212,6 +230,7 @@ export async function rejectShift(
     // Log to audit
     await prisma.auditLog.create({
       data: {
+        organizationId,
         actorId: managerId,
         actorType: "MANAGER",
         entity: "SHIFT",
@@ -263,8 +282,13 @@ export async function updatePendingShift(
   data: UpdateShiftInput
 ): Promise<ActionResult> {
   try {
-    const shift = await prisma.shift.findUnique({
-      where: { id: shiftId },
+    const organizationId = await requireOrganizationId();
+
+    const shift = await prisma.shift.findFirst({
+      where: {
+        id: shiftId,
+        organizationId,
+      },
     });
 
     if (!shift) {
@@ -309,6 +333,7 @@ export async function updatePendingShift(
     await prisma.timeEvent.createMany({
       data: [
         {
+          organizationId,
           employeeId: shift.employeeId,
           shiftId,
           eventType: "CORRECTION_IN",
@@ -316,6 +341,7 @@ export async function updatePendingShift(
           time: startDateTime,
         },
         {
+          organizationId,
           employeeId: shift.employeeId,
           shiftId,
           eventType: "CORRECTION_OUT",
@@ -328,6 +354,7 @@ export async function updatePendingShift(
     // Log to audit
     await prisma.auditLog.create({
       data: {
+        organizationId,
         actorId: managerId,
         actorType: "MANAGER",
         entity: "SHIFT",
@@ -374,8 +401,13 @@ export async function approveAllPendingShifts(
   managerId: string
 ): Promise<ActionResult> {
   try {
+    const organizationId = await requireOrganizationId();
+
     const pendingShifts = await prisma.shift.findMany({
-      where: { status: "PENDING_APPROVAL" },
+      where: {
+        organizationId,
+        status: "PENDING_APPROVAL",
+      },
       select: { id: true },
     });
 
@@ -385,7 +417,10 @@ export async function approveAllPendingShifts(
 
     // Update all pending shifts
     await prisma.shift.updateMany({
-      where: { status: "PENDING_APPROVAL" },
+      where: {
+        organizationId,
+        status: "PENDING_APPROVAL",
+      },
       data: {
         status: "CLOSED",
         approvedById: managerId,
@@ -396,6 +431,7 @@ export async function approveAllPendingShifts(
     // Log to audit (one entry for bulk action)
     await prisma.auditLog.create({
       data: {
+        organizationId,
         actorId: managerId,
         actorType: "MANAGER",
         entity: "SHIFT",

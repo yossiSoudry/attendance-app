@@ -4,6 +4,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { bonusFormSchema, type BonusFormValues } from "@/lib/validations/bonus";
+import { requireOrganizationId } from "@/lib/auth";
 import type { ActorType, BonusType } from "@/types/prisma";
 
 export type ActionResult = {
@@ -26,8 +27,10 @@ export type BonusWithDetails = {
 export async function getEmployeeBonuses(
   employeeId: string
 ): Promise<BonusWithDetails[]> {
+  const organizationId = await requireOrganizationId();
+
   const bonuses = await prisma.employeeBonus.findMany({
-    where: { employeeId },
+    where: { employeeId, organizationId },
     orderBy: { validFrom: "desc" },
   });
 
@@ -53,6 +56,8 @@ export async function createBonus(
   employeeId: string,
   data: BonusFormValues
 ): Promise<ActionResult> {
+  const organizationId = await requireOrganizationId();
+
   const parsed = bonusFormSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -66,8 +71,8 @@ export async function createBonus(
   const { bonusType, amountPerHour, amountFixed, validFrom, validTo, description } =
     parsed.data;
 
-  const employee = await prisma.employee.findUnique({
-    where: { id: employeeId },
+  const employee = await prisma.employee.findFirst({
+    where: { id: employeeId, organizationId },
   });
 
   if (!employee) {
@@ -79,6 +84,7 @@ export async function createBonus(
 
   const bonus = await prisma.employeeBonus.create({
     data: {
+      organizationId,
       employeeId,
       bonusType: bonusType as BonusType,
       amountPerHour:
@@ -97,6 +103,7 @@ export async function createBonus(
 
   await prisma.auditLog.create({
     data: {
+      organizationId,
       actorType: "MANAGER" as ActorType,
       entity: "EMPLOYEE_BONUS",
       entityId: bonus.id,
@@ -127,6 +134,8 @@ export async function updateBonus(
   bonusId: string,
   data: BonusFormValues
 ): Promise<ActionResult> {
+  const organizationId = await requireOrganizationId();
+
   const parsed = bonusFormSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -140,8 +149,8 @@ export async function updateBonus(
   const { bonusType, amountPerHour, amountFixed, validFrom, validTo, description } =
     parsed.data;
 
-  const existing = await prisma.employeeBonus.findUnique({
-    where: { id: bonusId },
+  const existing = await prisma.employeeBonus.findFirst({
+    where: { id: bonusId, organizationId },
   });
 
   if (!existing) {
@@ -180,6 +189,7 @@ export async function updateBonus(
 
   await prisma.auditLog.create({
     data: {
+      organizationId,
       actorType: "MANAGER" as ActorType,
       entity: "EMPLOYEE_BONUS",
       entityId: bonusId,
@@ -207,8 +217,10 @@ export async function updateBonus(
 }
 
 export async function deleteBonus(bonusId: string): Promise<ActionResult> {
-  const existing = await prisma.employeeBonus.findUnique({
-    where: { id: bonusId },
+  const organizationId = await requireOrganizationId();
+
+  const existing = await prisma.employeeBonus.findFirst({
+    where: { id: bonusId, organizationId },
   });
 
   if (!existing) {
@@ -234,6 +246,7 @@ export async function deleteBonus(bonusId: string): Promise<ActionResult> {
 
   await prisma.auditLog.create({
     data: {
+      organizationId,
       actorType: "MANAGER" as ActorType,
       entity: "EMPLOYEE_BONUS",
       entityId: bonusId,

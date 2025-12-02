@@ -4,6 +4,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import type { ActorType, EmployeeWorkRate } from "@/types/prisma";
+import { requireOrganizationId } from "@/lib/auth";
 
 export type ActionResult = {
   success: boolean;
@@ -17,6 +18,17 @@ export type EmployeeRateInput = {
 };
 
 export async function getEmployeeRates(employeeId: string) {
+  const organizationId = await requireOrganizationId();
+
+  // First verify employee belongs to organization
+  const employee = await prisma.employee.findFirst({
+    where: { id: employeeId, organizationId },
+  });
+
+  if (!employee) {
+    return [];
+  }
+
   const rates = await prisma.employeeWorkRate.findMany({
     where: { employeeId },
     include: {
@@ -42,6 +54,8 @@ export async function upsertEmployeeRate(
   employeeId: string,
   data: EmployeeRateInput
 ): Promise<ActionResult> {
+  const organizationId = await requireOrganizationId();
+
   const { workTypeId, hourlyRate } = data;
 
   if (hourlyRate < 0 || hourlyRate > 1000) {
@@ -51,8 +65,8 @@ export async function upsertEmployeeRate(
     };
   }
 
-  const employee = await prisma.employee.findUnique({
-    where: { id: employeeId },
+  const employee = await prisma.employee.findFirst({
+    where: { id: employeeId, organizationId },
   });
 
   if (!employee) {
@@ -62,8 +76,8 @@ export async function upsertEmployeeRate(
     };
   }
 
-  const workType = await prisma.workType.findUnique({
-    where: { id: workTypeId },
+  const workType = await prisma.workType.findFirst({
+    where: { id: workTypeId, organizationId },
   });
 
   if (!workType) {
@@ -75,12 +89,10 @@ export async function upsertEmployeeRate(
 
   const hourlyRateAgorot = Math.round(hourlyRate * 100);
 
-  const existing = await prisma.employeeWorkRate.findUnique({
+  const existing = await prisma.employeeWorkRate.findFirst({
     where: {
-      employeeId_workTypeId: {
-        employeeId,
-        workTypeId,
-      },
+      employeeId,
+      workTypeId,
     },
   });
 
@@ -97,6 +109,7 @@ export async function upsertEmployeeRate(
 
     await prisma.auditLog.create({
       data: {
+        organizationId,
         actorType: "MANAGER" as ActorType,
         entity: "EMPLOYEE_WORK_RATE",
         entityId: existing.id,
@@ -117,6 +130,7 @@ export async function upsertEmployeeRate(
 
     await prisma.auditLog.create({
       data: {
+        organizationId,
         actorType: "MANAGER" as ActorType,
         entity: "EMPLOYEE_WORK_RATE",
         entityId: newRate.id,
@@ -142,12 +156,24 @@ export async function deleteEmployeeRate(
   employeeId: string,
   workTypeId: string
 ): Promise<ActionResult> {
-  const existing = await prisma.employeeWorkRate.findUnique({
+  const organizationId = await requireOrganizationId();
+
+  // First verify employee belongs to organization
+  const employee = await prisma.employee.findFirst({
+    where: { id: employeeId, organizationId },
+  });
+
+  if (!employee) {
+    return {
+      success: false,
+      message: "העובד לא נמצא",
+    };
+  }
+
+  const existing = await prisma.employeeWorkRate.findFirst({
     where: {
-      employeeId_workTypeId: {
-        employeeId,
-        workTypeId,
-      },
+      employeeId,
+      workTypeId,
     },
   });
 
@@ -170,6 +196,7 @@ export async function deleteEmployeeRate(
 
   await prisma.auditLog.create({
     data: {
+      organizationId,
       actorType: "MANAGER" as ActorType,
       entity: "EMPLOYEE_WORK_RATE",
       entityId: existing.id,
@@ -191,8 +218,10 @@ export async function saveEmployeeRates(
   employeeId: string,
   rates: EmployeeRateInput[]
 ): Promise<ActionResult> {
-  const employee = await prisma.employee.findUnique({
-    where: { id: employeeId },
+  const organizationId = await requireOrganizationId();
+
+  const employee = await prisma.employee.findFirst({
+    where: { id: employeeId, organizationId },
   });
 
   if (!employee) {
@@ -229,6 +258,7 @@ export async function saveEmployeeRates(
 
     await prisma.auditLog.create({
       data: {
+        organizationId,
         actorType: "MANAGER" as ActorType,
         entity: "EMPLOYEE_WORK_RATE",
         entityId: rate.id,
@@ -256,6 +286,7 @@ export async function saveEmployeeRates(
 
         await prisma.auditLog.create({
           data: {
+            organizationId,
             actorType: "MANAGER" as ActorType,
             entity: "EMPLOYEE_WORK_RATE",
             entityId: existing.id,
@@ -276,6 +307,7 @@ export async function saveEmployeeRates(
 
       await prisma.auditLog.create({
         data: {
+          organizationId,
           actorType: "MANAGER" as ActorType,
           entity: "EMPLOYEE_WORK_RATE",
           entityId: newRate.id,

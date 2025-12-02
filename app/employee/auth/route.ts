@@ -12,7 +12,8 @@ export async function POST(request: NextRequest) {
     redirect("/employee/login?error=" + encodeURIComponent("יש להזין תעודת זהות"));
   }
 
-  const employee = await prisma.employee.findUnique({
+  // Find employee by nationalId (may exist in multiple orgs, take first active one)
+  const employee = await prisma.employee.findFirst({
     where: { nationalId },
   });
 

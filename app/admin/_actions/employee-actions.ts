@@ -4,6 +4,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { employeeFormSchema, type EmployeeFormValues } from "@/lib/validations/employee";
+import { requireOrganizationId } from "@/lib/auth";
 import type { ActorType } from "@/types/prisma";
 
 export type ActionResult = {
@@ -13,6 +14,8 @@ export type ActionResult = {
 };
 
 export async function createEmployee(data: EmployeeFormValues): Promise<ActionResult> {
+  const organizationId = await requireOrganizationId();
+
   const parsed = employeeFormSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -35,9 +38,14 @@ export async function createEmployee(data: EmployeeFormValues): Promise<ActionRe
     travelAllowanceAmount,
   } = parsed.data;
 
-  // בדיקה אם תעודת זהות כבר קיימת
+  // בדיקה אם תעודת זהות כבר קיימת בארגון
   const existing = await prisma.employee.findUnique({
-    where: { nationalId },
+    where: {
+      organizationId_nationalId: {
+        organizationId,
+        nationalId,
+      }
+    },
   });
 
   if (existing) {
@@ -50,6 +58,7 @@ export async function createEmployee(data: EmployeeFormValues): Promise<ActionRe
 
   const employee = await prisma.employee.create({
     data: {
+      organizationId,
       fullName,
       nationalId,
       status,
@@ -67,6 +76,7 @@ export async function createEmployee(data: EmployeeFormValues): Promise<ActionRe
   // רישום ב-AuditLog
   await prisma.auditLog.create({
     data: {
+      organizationId,
       actorType: "MANAGER" as ActorType,
       entity: "EMPLOYEE",
       entityId: employee.id,
@@ -99,6 +109,8 @@ export async function updateEmployee(
   id: string,
   data: EmployeeFormValues
 ): Promise<ActionResult> {
+  const organizationId = await requireOrganizationId();
+
   const parsed = employeeFormSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -121,9 +133,9 @@ export async function updateEmployee(
     travelAllowanceAmount,
   } = parsed.data;
 
-  // בדיקה אם העובד קיים
-  const existing = await prisma.employee.findUnique({
-    where: { id },
+  // בדיקה אם העובד קיים בארגון
+  const existing = await prisma.employee.findFirst({
+    where: { id, organizationId },
   });
 
   if (!existing) {
@@ -133,9 +145,10 @@ export async function updateEmployee(
     };
   }
 
-  // בדיקה אם תעודת זהות כבר קיימת אצל עובד אחר
+  // בדיקה אם תעודת זהות כבר קיימת אצל עובד אחר בארגון
   const duplicate = await prisma.employee.findFirst({
     where: {
+      organizationId,
       nationalId,
       NOT: { id },
     },
@@ -181,6 +194,7 @@ export async function updateEmployee(
   // רישום ב-AuditLog
   await prisma.auditLog.create({
     data: {
+      organizationId,
       actorType: "MANAGER" as ActorType,
       entity: "EMPLOYEE",
       entityId: id,
@@ -211,8 +225,10 @@ export async function updateEmployee(
 }
 
 export async function deleteEmployee(id: string): Promise<ActionResult> {
-  const existing = await prisma.employee.findUnique({
-    where: { id },
+  const organizationId = await requireOrganizationId();
+
+  const existing = await prisma.employee.findFirst({
+    where: { id, organizationId },
   });
 
   if (!existing) {
@@ -241,6 +257,7 @@ export async function deleteEmployee(id: string): Promise<ActionResult> {
   // רישום ב-AuditLog
   await prisma.auditLog.create({
     data: {
+      organizationId,
       actorType: "MANAGER" as ActorType,
       entity: "EMPLOYEE",
       entityId: id,

@@ -128,12 +128,44 @@ export async function getEmployeeMonthlyPayroll(
   year: number,
   month: number // 1-12
 ): Promise<EmployeePayrollSummary> {
+  // Get employee's organizationId
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    select: { organizationId: true },
+  });
+
+  if (!employee) {
+    return {
+      shifts: [],
+      summary: {
+        totalShifts: 0,
+        totalDuration: "0:00",
+        regularTime: "0:00",
+        overtime125Time: "0:00",
+        overtime150Time: "0:00",
+        shabbatTime: "0:00",
+        regularPay: "0.00",
+        overtime125Pay: "0.00",
+        overtime150Pay: "0.00",
+        shabbatPay: "0.00",
+        bonusPay: "0.00",
+        totalPay: "0.00",
+      },
+      period: {
+        startDate: "",
+        endDate: "",
+        month: "",
+      },
+    };
+  }
+
   // Calculate start and end of month
   const startDate = new Date(year, month - 1, 1);
   const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
   const shifts = await prisma.shift.findMany({
     where: {
+      organizationId: employee.organizationId,
       employeeId,
       status: "CLOSED",
       startTime: { gte: startDate },
@@ -280,8 +312,19 @@ export async function getEmployeeMonthlyPayroll(
 export async function getEmployeeAvailableMonths(
   employeeId: string
 ): Promise<{ label: string; year: number; month: number }[]> {
+  // Get employee's organizationId
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    select: { organizationId: true },
+  });
+
+  if (!employee) {
+    return [];
+  }
+
   const shifts = await prisma.shift.findMany({
     where: {
+      organizationId: employee.organizationId,
       employeeId,
       status: "CLOSED",
     },

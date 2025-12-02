@@ -2,7 +2,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { requireAdminSession } from "@/lib/auth";
+import { requireAdminSession, requireOrganizationId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 // ========================================
@@ -37,9 +37,13 @@ export type ActionResult = {
 
 export async function getPendingLeaveRequests(): Promise<LeaveRequestForAdmin[]> {
   await requireAdminSession();
+  const organizationId = await requireOrganizationId();
 
   const requests = await prisma.leaveRequest.findMany({
-    where: { status: "PENDING" },
+    where: {
+      organizationId,
+      status: "PENDING"
+    },
     include: {
       employee: {
         select: { fullName: true },
@@ -73,8 +77,11 @@ export async function getAllLeaveRequests(
   }
 ): Promise<LeaveRequestForAdmin[]> {
   await requireAdminSession();
+  const organizationId = await requireOrganizationId();
 
-  const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = {
+    organizationId,
+  };
 
   if (filters?.status && filters.status !== "all") {
     where.status = filters.status;
@@ -118,9 +125,13 @@ export async function getAllLeaveRequests(
 
 export async function getPendingLeaveCount(): Promise<number> {
   await requireAdminSession();
+  const organizationId = await requireOrganizationId();
 
   return prisma.leaveRequest.count({
-    where: { status: "PENDING" },
+    where: {
+      organizationId,
+      status: "PENDING"
+    },
   });
 }
 
@@ -133,9 +144,13 @@ export async function approveLeaveRequest(
   managerNote?: string
 ): Promise<ActionResult> {
   const session = await requireAdminSession();
+  const organizationId = await requireOrganizationId();
 
-  const request = await prisma.leaveRequest.findUnique({
-    where: { id: requestId },
+  const request = await prisma.leaveRequest.findFirst({
+    where: {
+      id: requestId,
+      organizationId
+    },
   });
 
   if (!request) {
@@ -178,9 +193,13 @@ export async function partiallyApproveLeaveRequest(
   managerNote?: string
 ): Promise<ActionResult> {
   const session = await requireAdminSession();
+  const organizationId = await requireOrganizationId();
 
-  const request = await prisma.leaveRequest.findUnique({
-    where: { id: requestId },
+  const request = await prisma.leaveRequest.findFirst({
+    where: {
+      id: requestId,
+      organizationId
+    },
   });
 
   if (!request) {
@@ -229,9 +248,13 @@ export async function rejectLeaveRequest(
   managerNote?: string
 ): Promise<ActionResult> {
   const session = await requireAdminSession();
+  const organizationId = await requireOrganizationId();
 
-  const request = await prisma.leaveRequest.findUnique({
-    where: { id: requestId },
+  const request = await prisma.leaveRequest.findFirst({
+    where: {
+      id: requestId,
+      organizationId
+    },
   });
 
   if (!request) {
