@@ -90,7 +90,7 @@ export function ExportPayrollDialog({
             <Label>בחר פורמט</Label>
             <RadioGroup
               value={format}
-              onValueChange={(value) => setFormat(value as ExportFormat)}
+              onValueChange={(value: string) => setFormat(value as ExportFormat)}
               className="grid grid-cols-2 gap-4"
             >
               <div>

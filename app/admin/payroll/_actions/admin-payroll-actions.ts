@@ -327,3 +327,70 @@ export async function getAdminAvailableMonths(
     month,
   }));
 }
+
+// ========================================
+// Get All Employees Monthly Payroll Summary
+// ========================================
+
+export async function getAllEmployeesMonthlyPayroll(
+  year: number,
+  month: number
+): Promise<AdminPayrollSummary[]> {
+  // Get all active employees
+  const employees = await prisma.employee.findMany({
+    where: { status: "ACTIVE" },
+    select: { id: true, fullName: true },
+    orderBy: { fullName: "asc" },
+  });
+
+  const results: AdminPayrollSummary[] = [];
+
+  for (const employee of employees) {
+    const payroll = await getAdminMonthlyPayroll(employee.id, year, month);
+    // Only include employees with shifts in this period
+    if (payroll.shifts.length > 0) {
+      results.push(payroll);
+    }
+  }
+
+  return results;
+}
+
+// ========================================
+// Get Global Available Months (all employees)
+// ========================================
+
+export async function getGlobalAvailableMonths(): Promise<
+  { label: string; year: number; month: number }[]
+> {
+  const shifts = await prisma.shift.findMany({
+    where: {
+      status: "CLOSED",
+    },
+    select: {
+      startTime: true,
+    },
+    orderBy: { startTime: "desc" },
+  });
+
+  const monthsSet = new Map<string, { year: number; month: number }>();
+
+  for (const shift of shifts) {
+    const year = shift.startTime.getFullYear();
+    const month = shift.startTime.getMonth() + 1;
+    const key = `${year}-${month}`;
+
+    if (!monthsSet.has(key)) {
+      monthsSet.set(key, { year, month });
+    }
+  }
+
+  return Array.from(monthsSet.values()).map(({ year, month }) => ({
+    label: new Date(year, month - 1).toLocaleDateString("he-IL", {
+      month: "long",
+      year: "numeric",
+    }),
+    year,
+    month,
+  }));
+}

@@ -155,6 +155,9 @@ model AdminUser {
   // Shifts approved by this admin
   approvedShifts Shift[]    @relation("ApprovedShifts")
 
+  // Leave requests approved/rejected by this admin
+  approvedLeaveRequests LeaveRequest[] @relation("ApprovedLeaveRequests")
+
   @@index([email])
   @@index([departmentId])
 }
@@ -176,10 +179,21 @@ model AdminInvitation {
 
 model Employee {
   id              String              @id @default(uuid()) @db.Uuid
+  employeeNumber  Int                 @unique @default(autoincrement())
   fullName        String
   nationalId      String              @unique
   status          EmployeeStatus      @default(ACTIVE)
-  baseHourlyRate  Int                 // stored in agorot
+
+  // Employment type and rates
+  employmentType        EmploymentType      @default(HOURLY)
+  baseHourlyRate        Int                 // stored in agorot (for hourly employees)
+  monthlyRate           Int?                // stored in agorot (for monthly employees)
+  workDaysPerWeek       Int                 @default(5)
+
+  // Travel allowance
+  travelAllowanceType   TravelAllowanceType @default(NONE)
+  travelAllowanceAmount Int?                // stored in agorot
+
   requireLocation Boolean             @default(false)
   departmentId    String?             @db.Uuid
   createdAt       DateTime            @default(now())
@@ -194,6 +208,7 @@ model Employee {
   documentRequests DocumentRequest[]
   documents        EmployeeDocument[]
   devices          Device[]
+  leaveRequests    LeaveRequest[]
 
   @@index([departmentId])
 }
@@ -426,4 +441,35 @@ model AuditLog {
   @@index([entity, entityId])
   @@index([actorId])
   @@index([createdAt])
+}
+
+// בקשת חופשה/מחלה
+model LeaveRequest {
+  id              String       @id @default(uuid()) @db.Uuid
+  employeeId      String       @db.Uuid
+  leaveType       LeaveType
+  status          LeaveStatus  @default(PENDING)
+
+  // Requested dates
+  startDate       DateTime     @db.Date
+  endDate         DateTime     @db.Date
+  totalDays       Int          // Total requested days
+
+  // Approval details
+  approvedDays    Int?         // For partial approval
+  approvedById    String?      @db.Uuid
+  approvedAt      DateTime?
+
+  // Notes
+  employeeNote    String?      // הערת עובד
+  managerNote     String?      // הערת מנהל
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  employee        Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  approvedBy      AdminUser?   @relation("ApprovedLeaveRequests", fields: [approvedById], references: [id])
+
+  @@index([employeeId, status])
+  @@index([startDate, endDate])
 }
