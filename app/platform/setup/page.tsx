@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { SetupForm } from "./setup-form";
 
+// Force dynamic rendering - this page checks database state
+export const dynamic = "force-dynamic";
+
 export default async function PlatformSetupPage() {
   // Check if platform admin already exists
   const existingAdmin = await prisma.platformAdmin.count();

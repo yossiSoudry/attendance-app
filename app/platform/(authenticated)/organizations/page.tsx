@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { getOrganizations } from "../../_actions/organization-actions";
 import { OrganizationsTable } from "../../_components/organizations-table";
 
+// Force dynamic rendering - this page fetches from database
+export const dynamic = "force-dynamic";
+
 export default async function OrganizationsPage() {
   const organizations = await getOrganizations();
 
