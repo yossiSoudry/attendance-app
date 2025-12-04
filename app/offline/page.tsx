@@ -1,4 +1,6 @@
 // app/offline/page.tsx
+"use client";
+
 import { WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
