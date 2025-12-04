@@ -1,6 +1,7 @@
 // app/platform/(authenticated)/organizations/[id]/page.tsx
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight,
   Building2,
@@ -16,6 +17,7 @@ import {
 // Force dynamic rendering - this page fetches from database
 export const dynamic = "force-dynamic";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -86,6 +88,15 @@ export default async function OrganizationPage({ params }: OrganizationPageProps
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
+          {/* Logo */}
+          <Avatar className="h-14 w-14">
+            {organization.logoUrl ? (
+              <AvatarImage src={organization.logoUrl} alt={organization.name} />
+            ) : null}
+            <AvatarFallback className="bg-primary/10 text-primary text-lg">
+              {organization.name.slice(0, 2)}
+            </AvatarFallback>
+          </Avatar>
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold tracking-tight">

@@ -109,7 +109,7 @@ export async function inviteAdmin(input: unknown) {
   if (role === "ADMIN" && session.user.role !== "OWNER") {
     return {
       success: false,
-      message: "רק בעל המערכת יכול להזמין מנהלים מלאים",
+      message: "רק סופר אדמין יכול להזמין מנהלים מלאים",
     };
   }
 
@@ -279,7 +279,7 @@ export async function updateAdminRole(adminId: string, newRole: AdminRole) {
   if (session.user.role !== "OWNER") {
     return {
       success: false,
-      message: "רק בעל המערכת יכול לשנות תפקידים",
+      message: "רק סופר אדמין יכול לשנות תפקידים",
     };
   }
 
@@ -366,7 +366,7 @@ export async function deactivateAdmin(adminId: string) {
   if (admin.role === "OWNER" && session.user.role !== "OWNER") {
     return {
       success: false,
-      message: "רק בעל המערכת יכול לבטל בעל מערכת אחר",
+      message: "רק סופר אדמין יכול לבטל בעל מערכת אחר",
     };
   }
 

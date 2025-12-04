@@ -1,0 +1,42 @@
+{
+  "name": "מערכת נוכחות",
+  "short_name": "נוכחות",
+  "description": "מערכת נוכחות עובדים - דיווח משמרות, חישוב שכר ומעקב נוכחות",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#10b981",
+  "orientation": "portrait-primary",
+  "dir": "rtl",
+  "lang": "he",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "כניסה לעובדים",
+      "short_name": "עובדים",
+      "url": "/employee",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "ממשק ניהול",
+      "short_name": "ניהול",
+      "url": "/admin",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+    }
+  ]
+}

@@ -1,10 +1,8 @@
 // app/employee/(with-sidebar)/layout.tsx
-import { AppNavbar } from "@/components/app-navbar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { EmployeeSidebar } from "../_components/employee-sidebar";
+import { EmployeeLayoutWrapper } from "../_components/employee-layout-wrapper";
 
 export default async function EmployeeWithSidebarLayout({
   children,
@@ -21,7 +19,16 @@ export default async function EmployeeWithSidebarLayout({
   const [employee, openTasksCount] = await Promise.all([
     prisma.employee.findUnique({
       where: { id: employeeId },
-      select: { fullName: true },
+      select: {
+        fullName: true,
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            logoUrl: true,
+          },
+        },
+      },
     }),
     prisma.task.count({
       where: { employeeId, status: "OPEN", isVisible: true, isTemplate: false },
@@ -33,18 +40,12 @@ export default async function EmployeeWithSidebarLayout({
   }
 
   return (
-    <SidebarProvider>
-      <EmployeeSidebar employeeName={employee.fullName} openTasksCount={openTasksCount} />
-      <SidebarInset>
-        <AppNavbar
-          breadcrumbs={[
-            { label: "ממשק עובד", href: "/employee" },
-          ]}
-        />
-        <div className="flex flex-1 flex-col gap-4 p-4">
-          {children}
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    <EmployeeLayoutWrapper
+      employeeName={employee.fullName}
+      openTasksCount={openTasksCount}
+      organization={employee.organization}
+    >
+      {children}
+    </EmployeeLayoutWrapper>
   );
 }

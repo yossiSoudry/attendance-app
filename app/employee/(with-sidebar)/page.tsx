@@ -2,12 +2,11 @@
 import { ShiftDurationWidget } from "@/components/shift-duration-widget";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
-import { CalendarDays, History } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ClockInButton } from "../_components/clock-in-button";
 import { ClockOutButton } from "../_components/clock-out-button";
-import { EmployeePayrollDialog } from "../_components/employee-payroll-dialog";
 import { MyPendingShifts } from "../_components/my-pending-shifts";
 import { RetroShiftFormDialog } from "../_components/retro-shift-form-dialog";
 import { WorkTypeSelector } from "../_components/work-type-selector";
@@ -190,25 +189,18 @@ export default async function EmployeeHomePage() {
               </p>
             )}
 
-            {/* Retro shift button */}
+            {/* Action buttons */}
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" asChild>
-                <a href="/employee/history" className="gap-2">
-                  <History className="h-4 w-4" />
-                  היסטוריית משמרות
-                </a>
-              </Button>
-              <Button variant="outline" asChild>
-                <a href="/employee/leave" className="gap-2">
-                  <CalendarDays className="h-4 w-4" />
-                  בקשות חופשה
-                </a>
-              </Button>
               <RetroShiftFormDialog
                 employeeId={employee.id}
                 workTypes={workTypes}
               />
-              <EmployeePayrollDialog employeeId={employee.id} />
+              <Button variant="outline" size="sm" asChild className="gap-2">
+                <a href="/employee/leave">
+                  <CalendarDays className="h-4 w-4" />
+                  בקשות חופשה
+                </a>
+              </Button>
             </div>
           </div>
         </section>

@@ -1,6 +1,7 @@
 // app/platform/_components/organizations-table.tsx
 "use client";
 
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,9 +12,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Eye, Users, UserCog } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Eye, Users, UserCog, Building2 } from "lucide-react";
 import Link from "next/link";
 import type { OrganizationWithStats } from "../_actions/organization-actions";
+
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
 
 interface OrganizationsTableProps {
   organizations: OrganizationWithStats[];
@@ -56,7 +67,19 @@ export function OrganizationsTable({ organizations }: OrganizationsTableProps) {
       <TableBody>
         {organizations.map((org) => (
           <TableRow key={org.id}>
-            <TableCell className="font-medium">{org.name}</TableCell>
+            <TableCell className="font-medium">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-8 w-8">
+                  {org.logoUrl ? (
+                    <AvatarImage src={org.logoUrl} alt={org.name} />
+                  ) : null}
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                    {getInitials(org.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <span>{org.name}</span>
+              </div>
+            </TableCell>
             <TableCell>{org.email}</TableCell>
             <TableCell>
               <Badge variant={statusVariants[org.status]}>

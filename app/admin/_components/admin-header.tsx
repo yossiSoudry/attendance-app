@@ -14,7 +14,7 @@ interface AdminHeaderProps {
 }
 
 const roleLabels: Record<AdminRole, string> = {
-  OWNER: "בעל המערכת",
+  OWNER: "סופר אדמין",
   ADMIN: "מנהל מערכת",
   MANAGER: "מנהל מחלקה",
 };

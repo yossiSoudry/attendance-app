@@ -14,7 +14,13 @@
       "Bash(cat:*)",
       "Bash(npx shadcn@latest add:*)",
       "Bash(dir /b \"C:\\Users\\USER\\Desktop\\projects\\attendance-app\\app\\employee\")",
-      "Bash(npx prisma validate:*)"
+      "Bash(npx prisma validate:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(npm run dev:*)",
+      "Bash(taskkill /PID 44964 /F)",
+      "Bash(taskkill:*)",
+      "Bash(if exist .next rmdir /s /q .next)"
     ],
     "deny": [],
     "ask": []

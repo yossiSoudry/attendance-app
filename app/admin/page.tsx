@@ -1,42 +1,24 @@
 // app/admin/page.tsx
-import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth";
-import type { Employee } from "@/types/prisma";
-import {
-  EmployeesDataTable,
-  type EmployeeTableRow,
-} from "./_components/employees-data-table";
 import { AdminHeader } from "./_components/admin-header";
+import { DashboardStatsCards } from "./_components/dashboard-stats";
+import { RecentActivityList, TopEmployeesList } from "./_components/dashboard-activity";
+import {
+  getDashboardStats,
+  getRecentActivity,
+  getTopEmployees,
+} from "./_actions/dashboard-actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPage() {
+export default async function AdminDashboardPage() {
   const session = await requireAdminSession();
 
-  const [employees, workTypes] = await Promise.all([
-    prisma.employee.findMany({
-      orderBy: { createdAt: "desc" },
-    }) as Promise<Employee[]>,
-    prisma.workType.findMany({
-      select: { id: true, name: true, isDefault: true, rateType: true, rateValue: true },
-      orderBy: { name: "asc" },
-    }),
+  const [stats, recentActivity, topEmployees] = await Promise.all([
+    getDashboardStats(),
+    getRecentActivity(8),
+    getTopEmployees(5),
   ]);
-
-  const rows: EmployeeTableRow[] = employees.map((emp) => ({
-    id: emp.id,
-    fullName: emp.fullName,
-    nationalId: emp.nationalId,
-    status: emp.status as EmployeeTableRow["status"],
-    employmentType: emp.employmentType as EmployeeTableRow["employmentType"],
-    baseHourlyRate: emp.baseHourlyRate,
-    monthlyRate: emp.monthlyRate,
-    workDaysPerWeek: emp.workDaysPerWeek,
-    travelAllowanceType:
-      emp.travelAllowanceType as EmployeeTableRow["travelAllowanceType"],
-    travelAllowanceAmount: emp.travelAllowanceAmount,
-    createdAt: emp.createdAt.toISOString(),
-  }));
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -44,25 +26,19 @@ export default async function AdminPage() {
 
       <section className="rounded-3xl border border-border bg-card p-6 shadow-lg">
         <h1 className="bg-linear-to-l from-violet-400 via-sky-400 to-violet-300 bg-clip-text text-2xl font-bold text-transparent">
-          ניהול עובדים
+          לוח בקרה
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          צפייה וניהול של כל העובדים במערכת
+          סקירה כללית של פעילות הארגון
         </p>
       </section>
 
-      <section className="rounded-3xl border border-border bg-card p-4">
-        {rows.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 text-sm text-muted-foreground">
-            <p>עדיין אין עובדים במערכת.</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">
-              לחץ על &quot;הוסף עובד&quot; כדי להוסיף עובד חדש.
-            </p>
-          </div>
-        ) : (
-          <EmployeesDataTable data={rows} workTypes={workTypes} />
-        )}
-      </section>
+      <DashboardStatsCards stats={stats} />
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <RecentActivityList activities={recentActivity} />
+        <TopEmployeesList employees={topEmployees} />
+      </div>
     </div>
   );
 }

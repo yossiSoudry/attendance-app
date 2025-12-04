@@ -204,11 +204,13 @@ export function WorkTypesDataTable({ data }: WorkTypesDataTableProps) {
                   rateValue: workType.rateValue,
                 }}
               />
-              <DeleteWorkTypeDialog
-                workTypeId={workType.id}
-                workTypeName={workType.name}
-                shiftsCount={workType.shiftsCount}
-              />
+              {!workType.isDefault && (
+                <DeleteWorkTypeDialog
+                  workTypeId={workType.id}
+                  workTypeName={workType.name}
+                  shiftsCount={workType.shiftsCount}
+                />
+              )}
             </div>
           );
         },

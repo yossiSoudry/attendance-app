@@ -3,8 +3,10 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Building2, Loader2, User } from "lucide-react";
+import { ArrowRight, Building2, Loader2, User, Upload, X, ImageIcon } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
+import { CldUploadWidget, type CloudinaryUploadWidgetResults } from "next-cloudinary";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,18 +25,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 
 import { createOrganization } from "../../../_actions/organization-actions";
+
+type LogoUpload = {
+  secure_url: string;
+  public_id: string;
+};
 
 export default function NewOrganizationPage() {
   const router = useRouter();
   const [isPending, setIsPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [logo, setLogo] = React.useState<LogoUpload | null>(null);
+
+  function handleLogoUpload(result: CloudinaryUploadWidgetResults) {
+    if (result.info && typeof result.info !== "string") {
+      setLogo({
+        secure_url: result.info.secure_url,
+        public_id: result.info.public_id,
+      });
+    }
+  }
+
+  function removeLogo() {
+    setLogo(null);
+  }
 
   async function handleSubmit(formData: FormData) {
     setIsPending(true);
     setError(null);
+
+    // Add logo URL to form data if exists
+    if (logo) {
+      formData.set("logoUrl", logo.secure_url);
+    }
 
     const result = await createOrganization(formData);
 
@@ -75,6 +100,85 @@ export default function NewOrganizationPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Logo Upload */}
+            <div className="space-y-2">
+              <Label>לוגו הארגון</Label>
+              <div className="flex items-center gap-4">
+                {logo ? (
+                  <div className="relative">
+                    <div className="relative h-20 w-20 overflow-hidden rounded-lg border">
+                      <Image
+                        src={logo.secure_url}
+                        alt="לוגו"
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -left-2 -top-2 h-6 w-6"
+                      onClick={removeLogo}
+                      disabled={isPending}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <CldUploadWidget
+                    signatureEndpoint="/api/sign-cloudinary-params"
+                    options={{
+                      folder: "attendance-app/logos",
+                      resourceType: "image",
+                      maxFiles: 1,
+                      clientAllowedFormats: ["jpg", "jpeg", "png", "gif", "webp", "svg"],
+                      maxFileSize: 2000000, // 2MB
+                      sources: ["local"],
+                      cropping: true,
+                      croppingAspectRatio: 1,
+                      croppingShowDimensions: true,
+                      language: "he",
+                      text: {
+                        he: {
+                          or: "או",
+                          menu: {
+                            files: "מהמחשב",
+                          },
+                          local: {
+                            browse: "בחר קובץ",
+                            dd_title_single: "גרור תמונה לכאן",
+                          },
+                          crop: {
+                            title: "חתוך תמונה",
+                            crop_btn: "חתוך",
+                            skip_btn: "דלג",
+                          },
+                        },
+                      },
+                    }}
+                    onSuccess={handleLogoUpload}
+                  >
+                    {({ open }) => (
+                      <button
+                        type="button"
+                        onClick={() => open()}
+                        disabled={isPending}
+                        className="flex h-20 w-20 flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 transition-colors hover:border-muted-foreground/50 hover:bg-muted disabled:opacity-50"
+                      >
+                        <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                        <span className="mt-1 text-xs text-muted-foreground">העלה לוגו</span>
+                      </button>
+                    )}
+                  </CldUploadWidget>
+                )}
+                <div className="text-sm text-muted-foreground">
+                  <p>תמונה מרובעת מומלצת</p>
+                  <p>עד 2MB, פורמטים: JPG, PNG, SVG</p>
+                </div>
+              </div>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name">שם הארגון *</Label>
@@ -201,24 +305,26 @@ export default function NewOrganizationPage() {
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex gap-4">
-          <Button type="submit" disabled={isPending}>
-            {isPending ? (
-              <>
-                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                יוצר ארגון...
-              </>
-            ) : (
-              <>
-                <Building2 className="ml-2 h-4 w-4" />
-                צור ארגון
-              </>
-            )}
-          </Button>
-          <Button type="button" variant="outline" asChild disabled={isPending}>
-            <Link href="/platform/organizations">ביטול</Link>
-          </Button>
+        {/* Actions - Sticky at bottom */}
+        <div className="sticky bottom-0 -mx-6 border-t bg-background px-6 py-4">
+          <div className="flex gap-4">
+            <Button type="submit" disabled={isPending}>
+              {isPending ? (
+                <>
+                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                  יוצר ארגון...
+                </>
+              ) : (
+                <>
+                  <Building2 className="ml-2 h-4 w-4" />
+                  צור ארגון
+                </>
+              )}
+            </Button>
+            <Button type="button" variant="outline" asChild disabled={isPending}>
+              <Link href="/platform/organizations">ביטול</Link>
+            </Button>
+          </div>
         </div>
       </form>
     </div>

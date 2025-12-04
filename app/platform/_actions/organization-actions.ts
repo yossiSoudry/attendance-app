@@ -91,6 +91,7 @@ export async function createOrganization(formData: FormData): Promise<{
   const email = formData.get("email") as string;
   const legalName = formData.get("legalName") as string | null;
   const taxId = formData.get("taxId") as string | null;
+  const logoUrl = formData.get("logoUrl") as string | null;
   const plan = (formData.get("plan") as OrganizationPlan) || "FREE";
 
   // Admin details for first admin
@@ -142,6 +143,7 @@ export async function createOrganization(formData: FormData): Promise<{
           email,
           legalName: legalName || null,
           taxId: taxId || null,
+          logoUrl: logoUrl || null,
           plan,
           status: "TRIAL",
           trialEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days trial
@@ -202,6 +204,7 @@ export async function updateOrganization(
   const email = formData.get("email") as string;
   const legalName = formData.get("legalName") as string | null;
   const taxId = formData.get("taxId") as string | null;
+  const logoUrl = formData.get("logoUrl") as string | null;
   const status = formData.get("status") as OrganizationStatus;
   const plan = formData.get("plan") as OrganizationPlan;
 
@@ -229,6 +232,7 @@ export async function updateOrganization(
         email,
         legalName: legalName || null,
         taxId: taxId || null,
+        logoUrl: logoUrl || null,
         status,
         plan,
       },

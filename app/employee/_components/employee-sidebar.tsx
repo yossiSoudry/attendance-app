@@ -2,6 +2,7 @@
 "use client";
 
 import {
+  Building2,
   Calculator,
   ClipboardList,
   Clock,
@@ -13,6 +14,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sidebar,
   SidebarContent,
@@ -27,6 +29,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import type { OrganizationInfo } from "./employee-layout-wrapper";
 
 // ========================================
 // Types
@@ -42,13 +45,14 @@ type NavItem = {
 type EmployeeSidebarProps = {
   employeeName: string;
   openTasksCount?: number;
+  organization: OrganizationInfo;
 };
 
 // ========================================
 // Component
 // ========================================
 
-export function EmployeeSidebar({ employeeName, openTasksCount }: EmployeeSidebarProps) {
+export function EmployeeSidebar({ employeeName, openTasksCount, organization }: EmployeeSidebarProps) {
   const pathname = usePathname();
 
   const navMain: NavItem[] = [
@@ -87,13 +91,24 @@ export function EmployeeSidebar({ employeeName, openTasksCount }: EmployeeSideba
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/employee">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
-                  <User className="h-4 w-4" />
-                </div>
+                {organization?.logoUrl ? (
+                  <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarImage src={organization.logoUrl} alt={organization.name} />
+                    <AvatarFallback className="rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
+                      <Building2 className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
+                    <Building2 className="h-4 w-4" />
+                  </div>
+                )}
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">{employeeName}</span>
-                  <span className="text-xs text-muted-foreground">
-                    ממשק עובד
+                  <span className="font-semibold truncate max-w-[140px]">
+                    {organization?.name || "ממשק עובד"}
+                  </span>
+                  <span className="text-xs text-muted-foreground truncate max-w-[140px]">
+                    {employeeName}
                   </span>
                 </div>
               </Link>

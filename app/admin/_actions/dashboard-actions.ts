@@ -350,3 +350,24 @@ export async function getTopEmployees(limit: number = 5): Promise<TopEmployee[]>
     .sort((a, b) => b.hoursThisMonth - a.hoursThisMonth)
     .slice(0, limit);
 }
+
+export type OrganizationInfo = {
+  id: string;
+  name: string;
+  logoUrl: string | null;
+};
+
+export async function getOrganizationInfo(): Promise<OrganizationInfo | null> {
+  const organizationId = await requireOrganizationId();
+
+  const organization = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: {
+      id: true,
+      name: true,
+      logoUrl: true,
+    },
+  });
+
+  return organization;
+}

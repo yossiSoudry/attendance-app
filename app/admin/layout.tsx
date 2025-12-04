@@ -1,29 +1,23 @@
 // app/admin/layout.tsx
-import { AppNavbar } from "@/components/app-navbar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { SessionProvider } from "next-auth/react";
-import { AdminSidebar } from "./_components/admin-sidebar";
+import { AdminLayoutWrapper } from "./_components/admin-layout-wrapper";
+import { getOrganizationInfo } from "./_actions/dashboard-actions";
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Fetch organization info for the sidebar
+  let organization = null;
+  try {
+    organization = await getOrganizationInfo();
+  } catch {
+    // User might not be authenticated yet, ignore error
+  }
+
   return (
-    <SessionProvider>
-      <SidebarProvider>
-        <AdminSidebar />
-        <SidebarInset>
-          <AppNavbar
-            breadcrumbs={[
-              { label: "ממשק מנהל", href: "/admin" },
-            ]}
-          />
-          <div className="flex flex-1 flex-col gap-4 p-4">
-            {children}
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
-    </SessionProvider>
+    <AdminLayoutWrapper organization={organization}>
+      {children}
+    </AdminLayoutWrapper>
   );
 }

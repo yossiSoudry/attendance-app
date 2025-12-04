@@ -4,6 +4,7 @@
 import * as React from "react";
 import {
   Briefcase,
+  Building2,
   Calculator,
   CalendarDays,
   ChevronDown,
@@ -23,6 +24,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import type { AdminRole } from "@prisma/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { OrganizationInfo } from "../_actions/dashboard-actions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -73,12 +75,12 @@ type NavItem = {
 const navMain: NavItem[] = [
   {
     title: "דשבורד",
-    url: "/admin/dashboard",
+    url: "/admin",
     icon: LayoutDashboard,
   },
   {
     title: "עובדים",
-    url: "/admin",
+    url: "/admin/employees",
     icon: Users,
   },
   {
@@ -119,7 +121,7 @@ function canManageAdmins(role: AdminRole | undefined): boolean {
 }
 
 const roleLabels: Record<AdminRole, string> = {
-  OWNER: "בעל המערכת",
+  OWNER: "סופר אדמין",
   ADMIN: "מנהל מערכת",
   MANAGER: "מנהל מחלקה",
 };
@@ -139,7 +141,11 @@ function getInitials(name: string | undefined): string {
 // Component
 // ========================================
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  organization?: OrganizationInfo | null;
+}
+
+export function AdminSidebar({ organization }: AdminSidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const userRole = session?.user?.role as AdminRole | undefined;
@@ -156,11 +162,22 @@ export function AdminSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/admin">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-sky-500 text-white">
-                  <Settings className="h-4 w-4" />
-                </div>
+                {organization?.logoUrl ? (
+                  <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarImage src={organization.logoUrl} alt={organization.name} />
+                    <AvatarFallback className="rounded-lg bg-gradient-to-br from-violet-500 to-sky-500 text-white">
+                      <Building2 className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-sky-500 text-white">
+                    <Building2 className="h-4 w-4" />
+                  </div>
+                )}
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">ממשק מנהל</span>
+                  <span className="font-semibold truncate max-w-[140px]">
+                    {organization?.name || "ממשק מנהל"}
+                  </span>
                   <span className="text-xs text-muted-foreground">
                     ניהול המערכת
                   </span>

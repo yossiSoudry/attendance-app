@@ -3,7 +3,9 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Edit, Loader2 } from "lucide-react";
+import Image from "next/image";
+import { Edit, Loader2, X, ImageIcon } from "lucide-react";
+import { CldUploadWidget, type CloudinaryUploadWidgetResults } from "next-cloudinary";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +35,7 @@ interface Organization {
   email: string;
   legalName: string | null;
   taxId: string | null;
+  logoUrl: string | null;
   status: string;
   plan: string;
 }
@@ -48,10 +51,28 @@ export function EditOrganizationDialog({
   const [open, setOpen] = React.useState(false);
   const [isPending, setIsPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = React.useState<string | null>(organization.logoUrl);
+
+  function handleLogoUpload(result: CloudinaryUploadWidgetResults) {
+    if (result.info && typeof result.info !== "string") {
+      setLogoUrl(result.info.secure_url);
+    }
+  }
+
+  function removeLogo() {
+    setLogoUrl(null);
+  }
 
   async function handleSubmit(formData: FormData) {
     setIsPending(true);
     setError(null);
+
+    // Add logo URL to form data
+    if (logoUrl) {
+      formData.set("logoUrl", logoUrl);
+    } else {
+      formData.set("logoUrl", "");
+    }
 
     const result = await updateOrganization(organization.id, formData);
 
@@ -64,6 +85,13 @@ export function EditOrganizationDialog({
 
     setIsPending(false);
   }
+
+  // Reset logo when dialog opens
+  React.useEffect(() => {
+    if (open) {
+      setLogoUrl(organization.logoUrl);
+    }
+  }, [open, organization.logoUrl]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -81,6 +109,64 @@ export function EditOrganizationDialog({
         </DialogHeader>
 
         <form action={handleSubmit} className="space-y-4">
+          {/* Logo Upload */}
+          <div className="space-y-2">
+            <Label>לוגו הארגון</Label>
+            <div className="flex items-center gap-4">
+              {logoUrl ? (
+                <div className="relative">
+                  <div className="relative h-16 w-16 overflow-hidden rounded-lg border">
+                    <Image
+                      src={logoUrl}
+                      alt="לוגו"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute -left-2 -top-2 h-5 w-5"
+                    onClick={removeLogo}
+                    disabled={isPending}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ) : (
+                <CldUploadWidget
+                  signatureEndpoint="/api/sign-cloudinary-params"
+                  options={{
+                    folder: "attendance-app/logos",
+                    resourceType: "image",
+                    maxFiles: 1,
+                    clientAllowedFormats: ["jpg", "jpeg", "png", "gif", "webp", "svg"],
+                    maxFileSize: 2000000,
+                    sources: ["local"],
+                    cropping: true,
+                    croppingAspectRatio: 1,
+                    language: "he",
+                  }}
+                  onSuccess={handleLogoUpload}
+                >
+                  {({ open }) => (
+                    <button
+                      type="button"
+                      onClick={() => open()}
+                      disabled={isPending}
+                      className="flex h-16 w-16 flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 transition-colors hover:border-muted-foreground/50 hover:bg-muted disabled:opacity-50"
+                    >
+                      <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                      <span className="mt-1 text-[10px] text-muted-foreground">העלה</span>
+                    </button>
+                  )}
+                </CldUploadWidget>
+              )}
+              <p className="text-xs text-muted-foreground">תמונה מרובעת, עד 2MB</p>
+            </div>
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="name">שם הארגון *</Label>
