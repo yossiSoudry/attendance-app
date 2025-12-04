@@ -179,7 +179,7 @@ export function AdminSidebar({ organization }: AdminSidebarProps) {
                     {organization?.name || "ממשק מנהל"}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    ניהול המערכת
+                    ממשק מנהל
                   </span>
                 </div>
               </Link>
