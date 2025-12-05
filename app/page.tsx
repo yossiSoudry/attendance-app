@@ -53,7 +53,7 @@ export default async function Home() {
       {/* Cards Grid */}
       <div className="grid gap-6 sm:grid-cols-2">
         {/* Employee Card */}
-        <Link href="/employee/login" className="group">
+        <Link href="/employee" className="group">
           <section className="relative h-full overflow-hidden rounded-3xl border-2 bg-card p-6 shadow-md transition-all duration-300 hover:border-emerald-500/50 hover:shadow-lg dark:shadow-secondary/50">
             <div
               aria-hidden="true"
