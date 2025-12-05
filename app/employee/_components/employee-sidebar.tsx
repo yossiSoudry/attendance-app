@@ -6,13 +6,13 @@ import {
   Calculator,
   ClipboardList,
   Clock,
+  Download,
   History,
-  Home,
   LogOut,
-  User,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -28,6 +28,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import type { OrganizationInfo } from "./employee-layout-wrapper";
 
@@ -48,19 +49,62 @@ type EmployeeSidebarProps = {
   organization: OrganizationInfo;
 };
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+};
+
 // ========================================
 // Component
 // ========================================
 
 export function EmployeeSidebar({ employeeName, openTasksCount, organization }: EmployeeSidebarProps) {
   const pathname = usePathname();
+  const { setOpenMobile, isMobile } = useSidebar();
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  // Listen for install prompt
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    };
+
+    // Check if already installed
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      setIsInstalled(true);
+    }
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+
+    await deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+
+    if (outcome === "accepted") {
+      setIsInstalled(true);
+    }
+    setDeferredPrompt(null);
+
+    // Close sidebar on mobile after action
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
+  const handleNavClick = () => {
+    // Close sidebar on mobile after navigation
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   const navMain: NavItem[] = [
-    {
-      title: "דף הבית",
-      url: "/",
-      icon: Home,
-    },
     {
       title: "משמרת נוכחית",
       url: "/employee",
@@ -129,7 +173,7 @@ export function EmployeeSidebar({ employeeName, openTasksCount, organization }: 
                     isActive={pathname === item.url}
                     tooltip={item.title}
                   >
-                    <Link href={item.url}>
+                    <Link href={item.url} onClick={handleNavClick}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </Link>
@@ -144,13 +188,33 @@ export function EmployeeSidebar({ employeeName, openTasksCount, organization }: 
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Install App Button - only show if not installed and prompt is available */}
+        {!isInstalled && deferredPrompt && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    tooltip="התקן כאפליקציה"
+                    onClick={handleInstallClick}
+                    className="text-emerald-600 dark:text-emerald-400"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>התקן כאפליקציה</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="יציאה">
-              <Link href="/employee/login">
+              <Link href="/employee/login" onClick={handleNavClick}>
                 <LogOut className="h-4 w-4" />
                 <span>יציאה</span>
               </Link>

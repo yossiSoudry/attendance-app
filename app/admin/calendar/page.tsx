@@ -4,7 +4,6 @@ import {
   CalendarDataTable,
   type CalendarEventTableRow,
 } from "./_components/calendar-data-table";
-import { CalendarEventFormDialog } from "./_components/calendar-event-form-dialog";
 import { PopulateHolidaysButton } from "./_components/populate-holidays-button";
 
 export const dynamic = "force-dynamic";
@@ -39,10 +38,7 @@ export default async function CalendarPage() {
               נהל חגים, צומות ואירועים מיוחדים שמשפיעים על חישובי שכר ושעות עבודה.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <PopulateHolidaysButton year={currentYear} />
-            <CalendarEventFormDialog mode="create" />
-          </div>
+          <PopulateHolidaysButton year={currentYear} />
         </div>
       </section>
 

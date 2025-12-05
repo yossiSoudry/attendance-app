@@ -10,7 +10,6 @@ import {
   getTasksStats,
 } from "./_actions/task-actions";
 import { TasksDataTable } from "./_components/tasks-data-table";
-import { TaskFormDialog } from "./_components/task-form-dialog";
 
 export default async function TasksPage() {
   const [tasks, employees, stats] = await Promise.all([
@@ -22,14 +21,11 @@ export default async function TasksPage() {
   return (
     <div className="container mx-auto space-y-6 py-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">ניהול משימות</h1>
-          <p className="text-sm text-muted-foreground">
-            הקצאת משימות לעובדים ומעקב אחר ביצוען
-          </p>
-        </div>
-        <TaskFormDialog mode="create" employees={employees} />
+      <div>
+        <h1 className="text-2xl font-bold">ניהול משימות</h1>
+        <p className="text-sm text-muted-foreground">
+          הקצאת משימות לעובדים ומעקב אחר ביצוען
+        </p>
       </div>
 
       {/* Stats Cards */}

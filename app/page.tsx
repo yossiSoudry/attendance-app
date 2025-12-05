@@ -2,9 +2,19 @@
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { BlurFade } from "@/components/ui/blur-fade";
 import { ArrowLeft, Clock, Shield, Users } from "lucide-react";
+import { cookies } from "next/headers";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
-export default function Home() {
+export default async function Home() {
+  // If employee is already logged in, redirect to employee dashboard
+  const cookieStore = await cookies();
+  const employeeId = cookieStore.get("employeeId")?.value;
+
+  if (employeeId) {
+    redirect("/employee");
+  }
+
   return (
     <main className="min-h-screen px-4 py-10 sm:px-6 lg:px-10">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
