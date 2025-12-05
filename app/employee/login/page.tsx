@@ -66,8 +66,7 @@ export default async function EmployeeLoginPage({ searchParams }: PageProps) {
 
             <div className="text-center mt-4 border-t border-border/60 pt-3 text-[11px] text-muted-foreground">
               <p>
-                אם אינך מצליח להיכנס, פנה למעסיק כדי לוודא שמספר הזהות שלך
-                מוגדר במערכת.
+         אם אינך מצליח להיכנס, פנה למנהל המערכת.
               </p>
             </div>
           </div>
