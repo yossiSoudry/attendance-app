@@ -17,6 +17,7 @@ import {
   getHolidaysForPeriod,
   getHolidayInfoFromMap,
 } from "@/lib/calendar-utils";
+import { getPlatformTimezone } from "@/lib/timezone";
 
 // ========================================
 // Types
@@ -114,9 +115,21 @@ async function getEmployeeBonuses(employeeId: string): Promise<BonusInfo[]> {
   }));
 }
 
-function getDayOfWeek(date: Date): string {
-  const days = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
-  return days[date.getDay()];
+function getDayOfWeek(date: Date, timezone: string): string {
+  const day = new Date(date).toLocaleDateString("en-US", {
+    weekday: "short",
+    timeZone: timezone,
+  });
+  const dayMap: Record<string, string> = {
+    Sun: "ראשון",
+    Mon: "שני",
+    Tue: "שלישי",
+    Wed: "רביעי",
+    Thu: "חמישי",
+    Fri: "שישי",
+    Sat: "שבת",
+  };
+  return dayMap[day] || day;
 }
 
 // ========================================
@@ -180,6 +193,7 @@ export async function getEmployeeMonthlyPayroll(
   });
 
   const bonuses = await getEmployeeBonuses(employeeId);
+  const timezone = await getPlatformTimezone();
 
   // טעינת כל החגים לתקופה מראש (יעיל יותר מקריאה לDB לכל משמרת)
   const holidaysMap = await getHolidaysForPeriod(startDate, endDate);
@@ -233,15 +247,17 @@ export async function getEmployeeMonthlyPayroll(
 
     results.push({
       id: shift.id,
-      date: shift.startTime.toLocaleDateString("he-IL"),
-      dayOfWeek: getDayOfWeek(shift.startTime),
+      date: shift.startTime.toLocaleDateString("he-IL", { timeZone: timezone }),
+      dayOfWeek: getDayOfWeek(shift.startTime, timezone),
       startTime: shift.startTime.toLocaleTimeString("he-IL", {
         hour: "2-digit",
         minute: "2-digit",
+        timeZone: timezone,
       }),
       endTime: shift.endTime.toLocaleTimeString("he-IL", {
         hour: "2-digit",
         minute: "2-digit",
+        timeZone: timezone,
       }),
       workTypeName: shift.workType?.name ?? null,
       shiftType: getShiftTypeLabel(payroll.shiftType),
@@ -279,6 +295,7 @@ export async function getEmployeeMonthlyPayroll(
   const monthName = new Date(year, month - 1).toLocaleDateString("he-IL", {
     month: "long",
     year: "numeric",
+    timeZone: timezone,
   });
 
   return {
@@ -298,8 +315,8 @@ export async function getEmployeeMonthlyPayroll(
       totalPay: formatAgorotToShekels(totalPay),
     },
     period: {
-      startDate: startDate.toLocaleDateString("he-IL"),
-      endDate: endDate.toLocaleDateString("he-IL"),
+      startDate: startDate.toLocaleDateString("he-IL", { timeZone: timezone }),
+      endDate: endDate.toLocaleDateString("he-IL", { timeZone: timezone }),
       month: monthName,
     },
   };

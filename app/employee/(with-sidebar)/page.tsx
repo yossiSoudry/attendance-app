@@ -2,6 +2,7 @@
 import { ShiftDurationWidget } from "@/components/shift-duration-widget";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
+import { getPlatformTimezone } from "@/lib/timezone";
 import { CalendarDays } from "lucide-react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -68,12 +69,16 @@ export default async function EmployeeHomePage() {
     orderBy: [{ isDefault: "desc" }, { name: "asc" }],
   });
 
+  // Get platform timezone
+  const timezone = await getPlatformTimezone();
+
   const inShift = Boolean(openShift);
   const startedAt =
     openShift?.startTime &&
     openShift.startTime.toLocaleTimeString("he-IL", {
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: timezone,
     });
 
   function formatLastShift(shift: { startTime: Date; endTime: Date }) {
@@ -95,9 +100,11 @@ export default async function EmployeeHomePage() {
     const timeRange = `${shift.startTime.toLocaleTimeString("he-IL", {
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: timezone,
     })} – ${shift.endTime.toLocaleTimeString("he-IL", {
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: timezone,
     })}`;
 
     if (shiftDay.getTime() === today.getTime()) {
@@ -111,10 +118,12 @@ export default async function EmployeeHomePage() {
     if (shiftDay >= weekAgo) {
       const dayName = shiftDate.toLocaleDateString("he-IL", {
         weekday: "long",
+        timeZone: timezone,
       });
       const date = shiftDate.toLocaleDateString("he-IL", {
         day: "numeric",
         month: "numeric",
+        timeZone: timezone,
       });
       return `${dayName} ${date}, ${timeRange}`;
     }
@@ -123,6 +132,7 @@ export default async function EmployeeHomePage() {
       day: "numeric",
       month: "numeric",
       year: "numeric",
+      timeZone: timezone,
     });
     return `${date}, ${timeRange}`;
   }

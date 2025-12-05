@@ -21,6 +21,7 @@ type ShiftRow = {
 
 type ShiftHistoryListProps = {
   shifts: ShiftRow[];
+  timezone: string;
 };
 
 type GroupedShifts = {
@@ -30,23 +31,25 @@ type GroupedShifts = {
   totalMinutes: number;
 };
 
-function formatDate(iso: string): string {
+function formatDate(iso: string, timezone: string): string {
   return new Date(iso).toLocaleDateString("he-IL", {
     weekday: "long",
     day: "numeric",
     month: "long",
+    timeZone: timezone,
   });
 }
 
-function formatDateKey(iso: string): string {
+function formatDateKey(iso: string, timezone: string): string {
   const date = new Date(iso);
-  return date.toISOString().split("T")[0];
+  return date.toLocaleDateString("en-CA", { timeZone: timezone });
 }
 
-function formatTime(iso: string): string {
+function formatTime(iso: string, timezone: string): string {
   return new Date(iso).toLocaleTimeString("he-IL", {
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: timezone,
   });
 }
 
@@ -91,11 +94,11 @@ const statusColors: Record<ShiftStatus, string> = {
     "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-300",
 };
 
-function groupShiftsByDay(shifts: ShiftRow[]): GroupedShifts[] {
+function groupShiftsByDay(shifts: ShiftRow[], timezone: string): GroupedShifts[] {
   const grouped = new Map<string, ShiftRow[]>();
 
   for (const shift of shifts) {
-    const dateKey = formatDateKey(shift.startTime);
+    const dateKey = formatDateKey(shift.startTime, timezone);
     const existing = grouped.get(dateKey) ?? [];
     existing.push(shift);
     grouped.set(dateKey, existing);
@@ -104,7 +107,7 @@ function groupShiftsByDay(shifts: ShiftRow[]): GroupedShifts[] {
   return Array.from(grouped.entries())
     .map(([date, dayShifts]) => ({
       date,
-      dateFormatted: formatDate(dayShifts[0].startTime),
+      dateFormatted: formatDate(dayShifts[0].startTime, timezone),
       shifts: dayShifts.sort(
         (a, b) =>
           new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
@@ -118,7 +121,7 @@ function groupShiftsByDay(shifts: ShiftRow[]): GroupedShifts[] {
     .sort((a, b) => b.date.localeCompare(a.date));
 }
 
-export function ShiftHistoryList({ shifts }: ShiftHistoryListProps) {
+export function ShiftHistoryList({ shifts, timezone }: ShiftHistoryListProps) {
   if (shifts.length === 0) {
     return (
       <section className="rounded-3xl border border-border bg-card p-6 text-center">
@@ -127,7 +130,7 @@ export function ShiftHistoryList({ shifts }: ShiftHistoryListProps) {
     );
   }
 
-  const groupedShifts = groupShiftsByDay(shifts);
+  const groupedShifts = groupShiftsByDay(shifts, timezone);
 
   return (
     <Accordion type="single" collapsible className="flex flex-col gap-3">
@@ -171,8 +174,8 @@ export function ShiftHistoryList({ shifts }: ShiftHistoryListProps) {
                     >
                       <Clock className="h-4 w-4" />
                       <span className="tabular-nums">
-                        {formatTime(shift.startTime)} -{" "}
-                        {shift.endTime ? formatTime(shift.endTime) : "..."}
+                        {formatTime(shift.startTime, timezone)} -{" "}
+                        {shift.endTime ? formatTime(shift.endTime, timezone) : "..."}
                       </span>
                     </div>
                     <span className="text-xs text-muted-foreground">

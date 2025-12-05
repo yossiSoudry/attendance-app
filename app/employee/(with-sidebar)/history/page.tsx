@@ -1,5 +1,6 @@
 // app/employee/(with-sidebar)/history/page.tsx
 import { prisma } from "@/lib/prisma";
+import { getPlatformTimezone } from "@/lib/timezone";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ShiftHistoryList } from "../../_components/history/shift-history-list";
@@ -61,6 +62,8 @@ export default async function EmployeeHistoryPage({ searchParams }: PageProps) {
     orderBy: { startTime: "desc" },
   });
 
+  const timezone = await getPlatformTimezone();
+
   const rows = shifts.map((shift: typeof shifts[number]) => ({
     id: shift.id,
     startTime: shift.startTime.toISOString(),
@@ -83,7 +86,7 @@ export default async function EmployeeHistoryPage({ searchParams }: PageProps) {
         </div>
       </section>
 
-      <ShiftHistoryList shifts={rows} />
+      <ShiftHistoryList shifts={rows} timezone={timezone} />
     </div>
   );
 }
