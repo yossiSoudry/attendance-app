@@ -45,6 +45,17 @@ model PlatformAdmin {
 }
 
 // ========================================
+// Platform Settings (Global Configuration)
+// ========================================
+
+model PlatformSettings {
+  id        String   @id @default("default")
+  timezone  String   @default("Asia/Jerusalem") // IANA timezone
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ========================================
 // Organization (Company/Tenant)
 // ========================================
 
