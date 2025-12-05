@@ -81,6 +81,13 @@ export function LoginForm() {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleLogin();
+    }
+  };
+
   return (
     <div className="space-y-4">
       {isShabbatMode && (
@@ -100,6 +107,7 @@ export function LoginForm() {
           placeholder="הקלד מספר זהות"
           className="text-center"
           onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
           disabled={isShabbatMode}
           required
         />
