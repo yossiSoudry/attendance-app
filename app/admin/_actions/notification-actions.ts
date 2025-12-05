@@ -2,7 +2,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { requireAdminSession, requireOrganizationId } from "@/lib/auth";
+import { getAdminSession } from "@/lib/auth";
 
 // ========================================
 // Types
@@ -30,8 +30,22 @@ export type NotificationItem = {
 // ========================================
 
 export async function getNotificationCounts(): Promise<NotificationCounts> {
-  await requireAdminSession();
-  const organizationId = await requireOrganizationId();
+  // Use getAdminSession instead of requireAdminSession to avoid throwing errors
+  // when called from non-admin contexts (e.g., employee layout)
+  const session = await getAdminSession();
+
+  // Return empty counts if not an admin session
+  if (!session?.user?.organizationId) {
+    return {
+      pendingLeaveRequests: 0,
+      pendingSickLeaveRequests: 0,
+      pendingRetroShifts: 0,
+      overdueTasks: 0,
+      total: 0,
+    };
+  }
+
+  const organizationId = session.user.organizationId;
 
   const [
     pendingLeaveRequests,
@@ -94,8 +108,16 @@ export async function getNotificationCounts(): Promise<NotificationCounts> {
 // ========================================
 
 export async function getRecentNotifications(): Promise<NotificationItem[]> {
-  await requireAdminSession();
-  const organizationId = await requireOrganizationId();
+  // Use getAdminSession instead of requireAdminSession to avoid throwing errors
+  // when called from non-admin contexts (e.g., employee layout)
+  const session = await getAdminSession();
+
+  // Return empty array if not an admin session
+  if (!session?.user?.organizationId) {
+    return [];
+  }
+
+  const organizationId = session.user.organizationId;
 
   const [leaveRequests, retroShifts, overdueTasks] = await Promise.all([
     // Recent pending leave requests
