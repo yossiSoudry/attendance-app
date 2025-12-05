@@ -139,6 +139,9 @@ export default async function EmployeeHomePage() {
     <div className="flex w-full flex-col gap-6">
       {/* Status Card */}
       <section className="rounded-2xl border bg-card p-6 shadow-sm">
+        <h2 className="text-lg font-semibold mb-3">
+          שלום, {employee.fullName}
+        </h2>
         <div className="flex items-center gap-3">
           <div className="relative flex h-3 w-3">
             <span
