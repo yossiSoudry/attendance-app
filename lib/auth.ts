@@ -246,6 +246,11 @@ export async function requireAdminSession() {
     throw new Error("Unauthorized");
   }
 
+  // Ensure organizationId exists (redirect to login if not)
+  if (!session.user.organizationId) {
+    throw new Error("Organization not found");
+  }
+
   return session;
 }
 

@@ -15,13 +15,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Admin routes protection (except login)
-  if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
+  // Admin routes protection (except login and register)
+  if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login") && !pathname.startsWith("/admin/register")) {
     const session = await auth();
 
     if (!session?.user) {
       const loginUrl = new URL("/admin/login", request.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Check if user has organizationId - if not, redirect to login
+    // This handles cases where the session is stale or corrupted
+    if (!session.user.organizationId) {
+      const loginUrl = new URL("/admin/login", request.url);
+      loginUrl.searchParams.set("error", "SessionExpired");
       return NextResponse.redirect(loginUrl);
     }
   }

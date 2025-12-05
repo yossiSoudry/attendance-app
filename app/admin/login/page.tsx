@@ -1,6 +1,6 @@
 // app/admin/login/page.tsx
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { auth, signOut } from "@/lib/auth";
 import { LoginForm } from "./_components/login-form";
 
 export default async function AdminLoginPage({
@@ -11,8 +11,13 @@ export default async function AdminLoginPage({
   const session = await auth();
   const params = await searchParams;
 
-  // If already logged in, redirect to admin dashboard
-  if (session?.user) {
+  // If SessionExpired error, user has a corrupted session - sign them out
+  if (params.error === "SessionExpired" && session?.user) {
+    await signOut({ redirect: false });
+    // Continue to show login page
+  }
+  // If already logged in with valid session, redirect to admin dashboard
+  else if (session?.user && session.user.organizationId) {
     redirect("/admin");
   }
 
@@ -21,6 +26,7 @@ export default async function AdminLoginPage({
     InvitationUsed: "ההזמנה כבר נוצלה.",
     InvitationExpired: "ההזמנה פגה תוקף. בקש הזמנה חדשה.",
     CredentialsSignin: "אימייל או סיסמה שגויים.",
+    SessionExpired: "הסשן פג תוקף. נא להתחבר מחדש.",
     Default: "אירעה שגיאה בהתחברות. נסה שוב.",
   };
 
