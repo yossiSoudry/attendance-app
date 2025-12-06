@@ -138,6 +138,8 @@ function ShiftDetailRow({ shift }: { shift: AdminShiftPayroll }) {
 // ========================================
 
 function EmployeePayrollRow({ payroll }: { payroll: AdminPayrollSummary }) {
+  const isMonthly = payroll.employeeInfo?.employmentType === "MONTHLY";
+
   return (
     <AccordionItem value={payroll.employeeId} className="border-b">
       <AccordionTrigger className="hover:no-underline px-2 py-3">
@@ -147,7 +149,14 @@ function EmployeePayrollRow({ payroll }: { payroll: AdminPayrollSummary }) {
               <User className="h-4 w-4 text-primary" />
             </div>
             <div className="text-right">
-              <div className="font-medium">{payroll.employeeName}</div>
+              <div className="flex items-center gap-2 font-medium">
+                {payroll.employeeName}
+                {isMonthly && (
+                  <Badge variant="outline" className="text-[10px] text-blue-600 border-blue-400">
+                    חודשי
+                  </Badge>
+                )}
+              </div>
               <div className="text-xs text-muted-foreground">
                 {payroll.summary.totalShifts} משמרות • {payroll.summary.totalDuration}
               </div>
@@ -180,6 +189,21 @@ function EmployeePayrollRow({ payroll }: { payroll: AdminPayrollSummary }) {
       </AccordionTrigger>
       <AccordionContent>
         <div className="space-y-4 px-2 pb-4">
+          {/* Monthly employee info */}
+          {isMonthly && payroll.employeeInfo?.monthlyRate && (
+            <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 text-sm">
+              <div className="font-medium text-blue-700 dark:text-blue-400">
+                עובד בשכר חודשי גלובלי
+              </div>
+              <div className="mt-1 text-blue-600 dark:text-blue-300">
+                שכר חודשי: <span className="font-semibold">{payroll.employeeInfo.monthlyRate}</span>
+              </div>
+              <div className="mt-1 text-xs text-blue-500/80">
+                * פירוט השעות למטה הוא לצורכי מעקב בלבד
+              </div>
+            </div>
+          )}
+
           {/* Summary breakdown */}
           <div className="rounded-lg border bg-emerald-500/5 p-3">
             <h4 className="mb-2 text-sm font-medium text-emerald-700 dark:text-emerald-400">

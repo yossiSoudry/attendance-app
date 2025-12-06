@@ -67,6 +67,10 @@ export type EmployeePayrollSummary = {
     endDate: string;
     month: string;
   };
+  employeeInfo?: {
+    employmentType: "HOURLY" | "MONTHLY";
+    monthlyRate: string | null;
+  };
 };
 
 // ========================================
@@ -141,10 +145,14 @@ export async function getEmployeeMonthlyPayroll(
   year: number,
   month: number // 1-12
 ): Promise<EmployeePayrollSummary> {
-  // Get employee's organizationId
+  // Get employee's organizationId and employment info
   const employee = await prisma.employee.findUnique({
     where: { id: employeeId },
-    select: { organizationId: true },
+    select: {
+      organizationId: true,
+      employmentType: true,
+      monthlyRate: true,
+    },
   });
 
   if (!employee) {
@@ -318,6 +326,12 @@ export async function getEmployeeMonthlyPayroll(
       startDate: startDate.toLocaleDateString("he-IL", { timeZone: timezone }),
       endDate: endDate.toLocaleDateString("he-IL", { timeZone: timezone }),
       month: monthName,
+    },
+    employeeInfo: {
+      employmentType: employee.employmentType,
+      monthlyRate: employee.monthlyRate
+        ? formatAgorotToShekels(employee.monthlyRate)
+        : null,
     },
   };
 }

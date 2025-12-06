@@ -65,6 +65,10 @@ export type AdminPayrollSummary = {
     endDate: string;
     month: string;
   };
+  employeeInfo?: {
+    employmentType: "HOURLY" | "MONTHLY";
+    monthlyRate: string | null;
+  };
 };
 
 // ========================================
@@ -141,7 +145,12 @@ export async function getAdminMonthlyPayroll(
       id: employeeId,
       organizationId,
     },
-    select: { id: true, fullName: true },
+    select: {
+      id: true,
+      fullName: true,
+      employmentType: true,
+      monthlyRate: true,
+    },
   });
 
   if (!employee) {
@@ -297,6 +306,12 @@ export async function getAdminMonthlyPayroll(
       startDate: startDate.toLocaleDateString("he-IL"),
       endDate: endDate.toLocaleDateString("he-IL"),
       month: monthName,
+    },
+    employeeInfo: {
+      employmentType: employee.employmentType,
+      monthlyRate: employee.monthlyRate
+        ? formatAgorotToShekels(employee.monthlyRate)
+        : null,
     },
   };
 }

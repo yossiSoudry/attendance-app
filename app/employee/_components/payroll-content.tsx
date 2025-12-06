@@ -198,14 +198,32 @@ function ShiftRow({ shift }: { shift: EmployeeShiftPayroll }) {
 
 function SummaryCard({
   summary,
+  employeeInfo,
 }: {
   summary: EmployeePayrollSummary["summary"];
+  employeeInfo?: EmployeePayrollSummary["employeeInfo"];
 }) {
+  const isMonthly = employeeInfo?.employmentType === "MONTHLY";
+
   return (
     <div className="rounded-xl border-2 border-emerald-500/30 bg-emerald-500/5 p-4">
       <h3 className="mb-3 font-semibold text-emerald-700 dark:text-emerald-400">
         סיכום חודשי
       </h3>
+
+      {isMonthly && employeeInfo?.monthlyRate && (
+        <div className="mb-3 rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 text-sm">
+          <div className="font-medium text-blue-700 dark:text-blue-400">
+            עובד בשכר חודשי גלובלי
+          </div>
+          <div className="mt-1 text-blue-600 dark:text-blue-300">
+            שכר חודשי: <span className="font-semibold">{employeeInfo.monthlyRate}</span>
+          </div>
+          <div className="mt-1 text-xs text-blue-500/80">
+            * פירוט השעות למטה הוא לצורכי מעקב בלבד
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
         <div className="flex justify-between">
@@ -467,7 +485,10 @@ export function PayrollContent({ employeeId }: PayrollContentProps) {
         <>
           {/* Summary Card */}
           <section className="rounded-2xl border bg-card p-4 shadow-sm">
-            <SummaryCard summary={payrollData.summary} />
+            <SummaryCard
+              summary={payrollData.summary}
+              employeeInfo={payrollData.employeeInfo}
+            />
           </section>
 
           {/* Shifts List */}
