@@ -42,6 +42,75 @@ const ARRAY_SEPARATOR = ",";
 const DEBOUNCE_MS = 300;
 const THROTTLE_MS = 50;
 
+// Custom filter function that handles array-based filter values (for faceted filters)
+// and text-based filter values (for text search)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const arrayIncludesFilter = (row: any, columnId: string, filterValue: unknown): boolean => {
+  const cellValue = row.getValue(columnId);
+
+  // Handle array filter value (from faceted/select filters)
+  if (Array.isArray(filterValue)) {
+    // If filter array is empty, show all rows
+    if (filterValue.length === 0) return true;
+
+    // Check if the cell value matches any of the filter values
+    const cellValueStr = String(cellValue ?? "").toLowerCase();
+    return filterValue.some((val) => {
+      const filterVal = String(val).toLowerCase();
+      // Exact match for select/faceted filters
+      return cellValueStr === filterVal;
+    });
+  }
+
+  // Handle string filter value (from text input filters)
+  if (typeof filterValue === "string") {
+    if (!filterValue) return true;
+    const cellValueStr = String(cellValue ?? "").toLowerCase();
+    return cellValueStr.includes(filterValue.toLowerCase());
+  }
+
+  return true;
+};
+
+// Text search filter that does partial matching
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const textFilter = (row: any, columnId: string, filterValue: unknown): boolean => {
+  if (!filterValue || (Array.isArray(filterValue) && filterValue.length === 0)) {
+    return true;
+  }
+
+  const cellValue = row.getValue(columnId);
+  const cellValueStr = String(cellValue ?? "").toLowerCase();
+
+  // Handle array of search terms (from URL parsing)
+  if (Array.isArray(filterValue)) {
+    return filterValue.some((val) =>
+      cellValueStr.includes(String(val).toLowerCase())
+    );
+  }
+
+  // Handle single string search
+  return cellValueStr.includes(String(filterValue).toLowerCase());
+};
+
+// Global filter function that searches across all columns
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const globalFilterFn = (row: any, _columnId: string, filterValue: unknown): boolean => {
+  if (!filterValue || typeof filterValue !== "string" || filterValue.trim() === "") {
+    return true;
+  }
+
+  const searchTerm = filterValue.toLowerCase().trim();
+
+  // Get all visible columns and check if any cell contains the search term
+  const cells = row.getAllCells();
+  return cells.some((cell: { getValue: () => unknown }) => {
+    const cellValue = cell.getValue();
+    if (cellValue == null) return false;
+    return String(cellValue).toLowerCase().includes(searchTerm);
+  });
+};
+
 interface UseDataTableProps<TData>
   extends Omit<
       TableOptions<TData>,
@@ -283,7 +352,13 @@ const onSortingChange = React.useCallback(
     defaultColumn: {
       ...tableProps.defaultColumn,
       enableColumnFilter: false,
+      filterFn: arrayIncludesFilter,
     },
+    filterFns: {
+      arrayIncludes: arrayIncludesFilter,
+      text: textFilter,
+    },
+    globalFilterFn: globalFilterFn,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onPaginationChange,
@@ -297,9 +372,9 @@ const onSortingChange = React.useCallback(
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
-    manualPagination: true,
-    manualSorting: true,
-    manualFiltering: true,
+    manualPagination: false,
+    manualSorting: false,
+    manualFiltering: false,
     meta: {
       ...tableProps.meta,
       queryKeys: {

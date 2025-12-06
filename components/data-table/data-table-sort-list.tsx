@@ -38,11 +38,16 @@ import {
   SortableItemHandle,
   SortableOverlay,
 } from "@/components/ui/sortable";
-import { dataTableConfig } from "@/config/data-table";
 import { cn } from "@/lib/utils";
 
 const SORT_SHORTCUT_KEY = "s";
 const REMOVE_SORT_SHORTCUTS = ["backspace", "delete"];
+
+// Hebrew labels for sort orders
+const sortOrderLabels = {
+  asc: "עולה",
+  desc: "יורד",
+};
 
 interface DataTableSortListProps<TData>
   extends React.ComponentProps<typeof PopoverContent> {
@@ -173,7 +178,7 @@ export function DataTableSortList<TData>({
             onKeyDown={onTriggerKeyDown}
           >
             <ArrowDownUp className="text-muted-foreground" />
-            Sort
+            מיון
             {sorting.length > 0 && (
               <Badge
                 variant="secondary"
@@ -192,7 +197,7 @@ export function DataTableSortList<TData>({
         >
           <div className="flex flex-col gap-1">
             <h4 id={labelId} className="font-medium leading-none">
-              {sorting.length > 0 ? "Sort by" : "No sorting applied"}
+              {sorting.length > 0 ? "מיון לפי" : "לא הוגדר מיון"}
             </h4>
             <p
               id={descriptionId}
@@ -202,8 +207,8 @@ export function DataTableSortList<TData>({
               )}
             >
               {sorting.length > 0
-                ? "Modify sorting to organize your rows."
-                : "Add sorting to organize your rows."}
+                ? "שנה את המיון לארגון השורות."
+                : "הוסף מיון לארגון השורות."}
             </p>
           </div>
           {sorting.length > 0 && (
@@ -231,7 +236,7 @@ export function DataTableSortList<TData>({
               onClick={onSortAdd}
               disabled={columns.length === 0}
             >
-              Add sort
+              הוסף מיון
             </Button>
             {sorting.length > 0 && (
               <Button
@@ -240,7 +245,7 @@ export function DataTableSortList<TData>({
                 className="rounded"
                 onClick={onSortingReset}
               >
-                Reset sorting
+                איפוס מיון
               </Button>
             )}
           </div>
@@ -330,9 +335,9 @@ function DataTableSortItem({
             className="w-(--radix-popover-trigger-width) p-0"
           >
             <Command>
-              <CommandInput placeholder="Search fields..." />
+              <CommandInput placeholder="חיפוש שדות..." />
               <CommandList>
-                <CommandEmpty>No fields found.</CommandEmpty>
+                <CommandEmpty>לא נמצאו שדות.</CommandEmpty>
                 <CommandGroup>
                   {columns.map((column) => (
                     <CommandItem
@@ -366,11 +371,8 @@ function DataTableSortItem({
             id={directionListboxId}
             className="min-w-(--radix-select-trigger-width)"
           >
-            {dataTableConfig.sortOrders.map((order) => (
-              <SelectItem key={order.value} value={order.value}>
-                {order.label}
-              </SelectItem>
-            ))}
+            <SelectItem value="asc">{sortOrderLabels.asc}</SelectItem>
+            <SelectItem value="desc">{sortOrderLabels.desc}</SelectItem>
           </SelectContent>
         </Select>
         <Button

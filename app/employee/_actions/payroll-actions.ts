@@ -77,31 +77,30 @@ export type EmployeePayrollSummary = {
 // Helper Functions
 // ========================================
 
-async function getHourlyRate(
-  employeeId: string,
-  workTypeId: string | null
-): Promise<number> {
-  if (workTypeId) {
-    const workRate = await prisma.employeeWorkRate.findUnique({
-      where: {
-        employeeId_workTypeId: {
-          employeeId,
-          workTypeId,
-        },
-      },
-    });
+type WorkRatesMap = Map<string, number>; // workTypeId -> hourlyRate
 
-    if (workRate) {
-      return workRate.hourlyRate;
-    }
-  }
-
-  const employee = await prisma.employee.findUnique({
-    where: { id: employeeId },
-    select: { baseHourlyRate: true },
+async function getEmployeeWorkRates(employeeId: string): Promise<WorkRatesMap> {
+  const workRates = await prisma.employeeWorkRate.findMany({
+    where: { employeeId },
+    select: { workTypeId: true, hourlyRate: true },
   });
 
-  return employee?.baseHourlyRate ?? 0;
+  const map = new Map<string, number>();
+  for (const rate of workRates) {
+    map.set(rate.workTypeId, rate.hourlyRate);
+  }
+  return map;
+}
+
+function getHourlyRateFromMap(
+  workTypeId: string | null,
+  workRatesMap: WorkRatesMap,
+  baseHourlyRate: number
+): number {
+  if (workTypeId && workRatesMap.has(workTypeId)) {
+    return workRatesMap.get(workTypeId)!;
+  }
+  return baseHourlyRate;
 }
 
 async function getEmployeeBonuses(employeeId: string): Promise<BonusInfo[]> {
@@ -152,6 +151,7 @@ export async function getEmployeeMonthlyPayroll(
       organizationId: true,
       employmentType: true,
       monthlyRate: true,
+      baseHourlyRate: true,
     },
   });
 
@@ -184,27 +184,29 @@ export async function getEmployeeMonthlyPayroll(
   const startDate = new Date(year, month - 1, 1);
   const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-  const shifts = await prisma.shift.findMany({
-    where: {
-      organizationId: employee.organizationId,
-      employeeId,
-      status: "CLOSED",
-      startTime: { gte: startDate },
-      endTime: { lte: endDate },
-    },
-    include: {
-      workType: {
-        select: { name: true },
+  // Batch load all data upfront to avoid N+1 queries
+  const [shifts, bonuses, workRatesMap, timezone, holidaysMap] = await Promise.all([
+    prisma.shift.findMany({
+      where: {
+        organizationId: employee.organizationId,
+        employeeId,
+        status: "CLOSED",
+        startTime: { gte: startDate },
+        endTime: { lte: endDate },
       },
-    },
-    orderBy: { startTime: "asc" },
-  });
-
-  const bonuses = await getEmployeeBonuses(employeeId);
-  const timezone = await getPlatformTimezone();
-
-  // טעינת כל החגים לתקופה מראש (יעיל יותר מקריאה לDB לכל משמרת)
-  const holidaysMap = await getHolidaysForPeriod(startDate, endDate);
+      include: {
+        workType: {
+          select: { name: true },
+        },
+      },
+      orderBy: { startTime: "asc" },
+    }),
+    getEmployeeBonuses(employeeId),
+    getEmployeeWorkRates(employeeId),
+    getPlatformTimezone(),
+    // טעינת כל החגים לתקופה מראש (יעיל יותר מקריאה לDB לכל משמרת)
+    getHolidaysForPeriod(startDate, endDate),
+  ]);
 
   const results: EmployeeShiftPayroll[] = [];
 
@@ -223,7 +225,12 @@ export async function getEmployeeMonthlyPayroll(
   for (const shift of shifts) {
     if (!shift.endTime) continue;
 
-    const hourlyRate = await getHourlyRate(employeeId, shift.workTypeId);
+    // Use pre-loaded work rates map instead of querying each time
+    const hourlyRate = getHourlyRateFromMap(
+      shift.workTypeId,
+      workRatesMap,
+      employee.baseHourlyRate
+    );
 
     // בדיקה האם יום חג/מנוחה מלוח השנה
     const holidayInfo = getHolidayInfoFromMap(holidaysMap, shift.startTime);

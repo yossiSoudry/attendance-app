@@ -305,50 +305,48 @@ export async function getTopEmployees(limit: number = 5): Promise<TopEmployee[]>
   const monthStart = startOfMonth(new Date());
   const monthEnd = endOfMonth(new Date());
 
-  // Get all active employees with their shifts and completed tasks this month
-  const employees = await prisma.employee.findMany({
-    where: {
-      organizationId,
-      status: "ACTIVE"
-    },
-    include: {
-      shifts: {
-        where: {
-          startTime: { gte: monthStart, lte: monthEnd },
-          endTime: { not: null },
-        },
-        select: { startTime: true, endTime: true },
-      },
-      tasks: {
-        where: {
-          status: "COMPLETED",
-          completedAt: { gte: monthStart, lte: monthEnd },
-        },
-        select: { id: true },
-      },
-    },
-  });
+  // Use raw SQL for efficient aggregation instead of loading all data
+  // This query calculates hours and task counts directly in the database
+  const topEmployeesByHours = await prisma.$queryRaw<
+    Array<{
+      id: string;
+      fullName: string;
+      totalMinutes: bigint | null;
+      tasksCompleted: bigint;
+    }>
+  >`
+    SELECT
+      e.id,
+      e."fullName",
+      COALESCE(
+        SUM(
+          EXTRACT(EPOCH FROM (s."endTime" - s."startTime")) / 60
+        ),
+        0
+      ) as "totalMinutes",
+      COUNT(DISTINCT t.id) as "tasksCompleted"
+    FROM "Employee" e
+    LEFT JOIN "Shift" s ON s."employeeId" = e.id
+      AND s."startTime" >= ${monthStart}
+      AND s."startTime" <= ${monthEnd}
+      AND s."endTime" IS NOT NULL
+    LEFT JOIN "Task" t ON t."employeeId" = e.id
+      AND t.status = 'COMPLETED'
+      AND t."completedAt" >= ${monthStart}
+      AND t."completedAt" <= ${monthEnd}
+    WHERE e."organizationId" = ${organizationId}::uuid
+      AND e.status = 'ACTIVE'
+    GROUP BY e.id, e."fullName"
+    ORDER BY "totalMinutes" DESC
+    LIMIT ${limit}
+  `;
 
-  const employeeStats = employees.map((emp) => {
-    const hoursThisMonth = emp.shifts.reduce((total, shift) => {
-      if (!shift.endTime) return total;
-      const hours =
-        (shift.endTime.getTime() - shift.startTime.getTime()) / (1000 * 60 * 60);
-      return total + hours;
-    }, 0);
-
-    return {
-      id: emp.id,
-      name: emp.fullName,
-      hoursThisMonth: Math.round(hoursThisMonth * 10) / 10,
-      tasksCompleted: emp.tasks.length,
-    };
-  });
-
-  // Sort by hours worked
-  return employeeStats
-    .sort((a, b) => b.hoursThisMonth - a.hoursThisMonth)
-    .slice(0, limit);
+  return topEmployeesByHours.map((emp) => ({
+    id: emp.id,
+    name: emp.fullName,
+    hoursThisMonth: Math.round((Number(emp.totalMinutes || 0) / 60) * 10) / 10,
+    tasksCompleted: Number(emp.tasksCompleted),
+  }));
 }
 
 export type OrganizationInfo = {

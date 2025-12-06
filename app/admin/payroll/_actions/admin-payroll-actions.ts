@@ -75,34 +75,30 @@ export type AdminPayrollSummary = {
 // Helper Functions
 // ========================================
 
-async function getHourlyRate(
-  employeeId: string,
-  workTypeId: string | null,
-  organizationId: string
-): Promise<number> {
-  if (workTypeId) {
-    // EmployeeWorkRate doesn't have organizationId directly - verify through employee
-    const workRate = await prisma.employeeWorkRate.findFirst({
-      where: {
-        employeeId,
-        workTypeId,
-      },
-    });
+type WorkRatesMap = Map<string, number>; // workTypeId -> hourlyRate
 
-    if (workRate) {
-      return workRate.hourlyRate;
-    }
-  }
-
-  const employee = await prisma.employee.findFirst({
-    where: {
-      id: employeeId,
-      organizationId,
-    },
-    select: { baseHourlyRate: true },
+async function getEmployeeWorkRates(employeeId: string): Promise<WorkRatesMap> {
+  const workRates = await prisma.employeeWorkRate.findMany({
+    where: { employeeId },
+    select: { workTypeId: true, hourlyRate: true },
   });
 
-  return employee?.baseHourlyRate ?? 0;
+  const map = new Map<string, number>();
+  for (const rate of workRates) {
+    map.set(rate.workTypeId, rate.hourlyRate);
+  }
+  return map;
+}
+
+function getHourlyRateFromMap(
+  workTypeId: string | null,
+  workRatesMap: WorkRatesMap,
+  baseHourlyRate: number
+): number {
+  if (workTypeId && workRatesMap.has(workTypeId)) {
+    return workRatesMap.get(workTypeId)!;
+  }
+  return baseHourlyRate;
 }
 
 async function getEmployeeBonuses(employeeId: string, organizationId: string): Promise<BonusInfo[]> {
@@ -139,7 +135,7 @@ export async function getAdminMonthlyPayroll(
 ): Promise<AdminPayrollSummary> {
   const organizationId = await requireOrganizationId();
 
-  // Get employee info
+  // Get employee info with base rate
   const employee = await prisma.employee.findFirst({
     where: {
       id: employeeId,
@@ -150,6 +146,7 @@ export async function getAdminMonthlyPayroll(
       fullName: true,
       employmentType: true,
       monthlyRate: true,
+      baseHourlyRate: true,
     },
   });
 
@@ -161,23 +158,26 @@ export async function getAdminMonthlyPayroll(
   const startDate = new Date(year, month - 1, 1);
   const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-  const shifts = await prisma.shift.findMany({
-    where: {
-      employeeId,
-      organizationId,
-      status: "CLOSED",
-      startTime: { gte: startDate },
-      endTime: { lte: endDate },
-    },
-    include: {
-      workType: {
-        select: { name: true },
+  // Batch load all data upfront to avoid N+1 queries
+  const [shifts, bonuses, workRatesMap] = await Promise.all([
+    prisma.shift.findMany({
+      where: {
+        employeeId,
+        organizationId,
+        status: "CLOSED",
+        startTime: { gte: startDate },
+        endTime: { lte: endDate },
       },
-    },
-    orderBy: { startTime: "asc" },
-  });
-
-  const bonuses = await getEmployeeBonuses(employeeId, organizationId);
+      include: {
+        workType: {
+          select: { name: true },
+        },
+      },
+      orderBy: { startTime: "asc" },
+    }),
+    getEmployeeBonuses(employeeId, organizationId),
+    getEmployeeWorkRates(employeeId),
+  ]);
 
   const results: AdminShiftPayroll[] = [];
 
@@ -196,7 +196,12 @@ export async function getAdminMonthlyPayroll(
   for (const shift of shifts) {
     if (!shift.endTime) continue;
 
-    const hourlyRate = await getHourlyRate(employeeId, shift.workTypeId, organizationId);
+    // Use pre-loaded work rates map instead of querying each time
+    const hourlyRate = getHourlyRateFromMap(
+      shift.workTypeId,
+      workRatesMap,
+      employee.baseHourlyRate
+    );
 
     const shiftType = determineShiftType(
       shift.startTime,

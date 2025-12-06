@@ -43,21 +43,21 @@ export function DataTableViewOptions<TData>({
     <Popover>
       <PopoverTrigger asChild>
         <Button
-          aria-label="Toggle columns"
+          aria-label="הצג/הסתר עמודות"
           role="combobox"
           variant="outline"
           size="sm"
           className="ml-auto hidden h-8 font-normal lg:flex"
         >
           <Settings2 className="text-muted-foreground" />
-          View
+          תצוגה
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-44 p-0" {...props}>
         <Command>
-          <CommandInput placeholder="Search columns..." />
+          <CommandInput placeholder="חיפוש עמודות..." />
           <CommandList>
-            <CommandEmpty>No columns found.</CommandEmpty>
+            <CommandEmpty>לא נמצאו עמודות.</CommandEmpty>
             <CommandGroup>
               {columns.map((column) => (
                 <CommandItem
@@ -71,7 +71,7 @@ export function DataTableViewOptions<TData>({
                   </span>
                   <Check
                     className={cn(
-                      "ml-auto size-4 shrink-0",
+                      "mr-auto size-4 shrink-0",
                       column.getIsVisible() ? "opacity-100" : "opacity-0",
                     )}
                   />

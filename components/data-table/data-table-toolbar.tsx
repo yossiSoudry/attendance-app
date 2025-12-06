@@ -1,7 +1,7 @@
 "use client";
 
 import type { Column, Table } from "@tanstack/react-table";
-import { X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import * as React from "react";
 
 import { DataTableDateFilter } from "@/components/data-table/data-table-date-filter";
@@ -22,15 +22,28 @@ export function DataTableToolbar<TData>({
   className,
   ...props
 }: DataTableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0;
+  const [globalFilter, setGlobalFilter] = React.useState("");
+  const isFiltered = table.getState().columnFilters.length > 0 || globalFilter.length > 0;
 
-  const columns = React.useMemo(
-    () => table.getAllColumns().filter((column) => column.getCanFilter()),
+  // Get columns that have select/multiSelect filters (not text filters)
+  const selectColumns = React.useMemo(
+    () => table.getAllColumns().filter((column) => {
+      const meta = column.columnDef.meta;
+      return column.getCanFilter() && meta?.variant &&
+        ["select", "multiSelect", "date", "dateRange", "range"].includes(meta.variant);
+    }),
     [table],
   );
 
+  // Handle global search across all text-searchable columns
+  React.useEffect(() => {
+    table.setGlobalFilter(globalFilter);
+  }, [globalFilter, table]);
+
   const onReset = React.useCallback(() => {
     table.resetColumnFilters();
+    setGlobalFilter("");
+    table.setGlobalFilter("");
   }, [table]);
 
   return (
@@ -44,19 +57,30 @@ export function DataTableToolbar<TData>({
       {...props}
     >
       <div className="flex flex-1 flex-wrap items-center gap-2">
-        {columns.map((column) => (
+        {/* Global search input */}
+        <div className="relative">
+          <Search className="absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="חיפוש..."
+            value={globalFilter}
+            onChange={(event) => setGlobalFilter(event.target.value)}
+            className="h-8 w-40 pr-8 lg:w-64"
+          />
+        </div>
+        {/* Only show select/date/range filters, not text filters */}
+        {selectColumns.map((column) => (
           <DataTableToolbarFilter key={column.id} column={column} />
         ))}
         {isFiltered && (
           <Button
-            aria-label="Reset filters"
+            aria-label="איפוס סינונים"
             variant="outline"
             size="sm"
             className="border-dashed"
             onClick={onReset}
           >
             <X />
-            Reset
+            איפוס
           </Button>
         )}
       </div>
@@ -81,15 +105,9 @@ function DataTableToolbarFilter<TData>({
       if (!columnMeta?.variant) return null;
 
       switch (columnMeta.variant) {
+        // Text filters are now handled by global search
         case "text":
-          return (
-            <Input
-              placeholder={columnMeta.placeholder ?? columnMeta.label}
-              value={(column.getFilterValue() as string) ?? ""}
-              onChange={(event) => column.setFilterValue(event.target.value)}
-              className="h-8 w-40 lg:w-56"
-            />
-          );
+          return null;
 
         case "number":
           return (

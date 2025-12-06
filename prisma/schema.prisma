@@ -318,6 +318,7 @@ model Employee {
   @@unique([organizationId, nationalId])     // ת.ז. ייחודית בתוך ארגון
   @@index([organizationId])
   @@index([departmentId])
+  @@index([organizationId, status])
 }
 
 model WorkType {
@@ -382,6 +383,8 @@ model Shift {
 
   @@index([organizationId])
   @@index([employeeId, startTime])
+  @@index([organizationId, status])
+  @@index([organizationId, status, startTime])
 }
 
 model TimeEvent {
@@ -405,6 +408,7 @@ model TimeEvent {
   @@index([organizationId])
   @@index([employeeId, time])
   @@index([shiftId])
+  @@index([organizationId, time])
 }
 
 // WorkRules הגלובלי - נשמר לתאימות לאחור (יימחק בעתיד)
@@ -519,6 +523,8 @@ model Task {
   @@index([employeeId, status])
   @@index([isTemplate, recurrenceType])
   @@index([scheduledDate, isVisible])
+  @@index([organizationId, isTemplate, status])
+  @@index([employeeId, status, isVisible])
 }
 
 model DocumentRequest {
