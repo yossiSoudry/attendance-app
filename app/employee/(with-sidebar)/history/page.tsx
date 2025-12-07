@@ -73,7 +73,7 @@ export default async function EmployeeHistoryPage({ searchParams }: PageProps) {
   }));
 
   return (
-    <div className="flex w-full flex-col gap-6">
+    <div className="flex w-full flex-col gap-6 pb-2">
       <section className="rounded-2xl border bg-card p-6 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between">
           <div>

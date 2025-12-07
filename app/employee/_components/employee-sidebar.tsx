@@ -4,10 +4,12 @@
 import {
   Building2,
   Calculator,
+  ChevronsUpDown,
   ClipboardList,
   Clock,
   Download,
   History,
+  Home,
   LogOut,
 } from "lucide-react";
 import Link from "next/link";
@@ -15,6 +17,14 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -53,6 +63,17 @@ type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
+
+// Get initials from name
+function getInitials(name: string | undefined): string {
+  if (!name) return "U";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
 
 // ========================================
 // Component
@@ -213,12 +234,66 @@ export function EmployeeSidebar({ employeeName, openTasksCount, organization }: 
       <SidebarFooter className="border-t">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="יציאה">
-              <Link href="/employee/login" onClick={handleNavClick}>
-                <LogOut className="h-4 w-4" />
-                <span>יציאה</span>
-              </Link>
-            </SidebarMenuButton>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  size="lg"
+                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                >
+                  <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarFallback className="rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
+                      {getInitials(employeeName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-right text-sm leading-tight">
+                    <span className="truncate font-semibold">
+                      {employeeName}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      עובד
+                    </span>
+                  </div>
+                  <ChevronsUpDown className="mr-auto size-4" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                side="top"
+                align="end"
+                sideOffset={4}
+              >
+                <DropdownMenuLabel className="p-0 font-normal">
+                  <div className="flex items-center gap-2 px-1 py-1.5 text-right text-sm">
+                    <Avatar className="h-8 w-8 rounded-lg">
+                      <AvatarFallback className="rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
+                        {getInitials(employeeName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="grid flex-1 text-right text-sm leading-tight">
+                      <span className="truncate font-semibold">
+                        {employeeName}
+                      </span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {organization?.name || "עובד"}
+                      </span>
+                    </div>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/" onClick={handleNavClick}>
+                    <Home className="h-4 w-4" />
+                    דף הבית
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="text-destructive focus:text-destructive">
+                  <Link href="/employee/login" onClick={handleNavClick}>
+                    <LogOut className="h-4 w-4" />
+                    יציאה
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

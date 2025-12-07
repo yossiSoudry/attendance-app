@@ -1,26 +1,29 @@
 // app/page.tsx
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { BlurFade } from "@/components/ui/blur-fade";
-import { ArrowLeft, Clock, Shield, Users } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, Code2, Shield, Users } from "lucide-react";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 export default async function Home() {
-  // If employee is already logged in, redirect to employee dashboard
+  // Check if user is logged in (don't redirect - just show indicator)
   const cookieStore = await cookies();
   const employeeId = cookieStore.get("employeeId")?.value;
-
-  if (employeeId) {
-    redirect("/employee");
-  }
+  const isEmployeeLoggedIn = !!employeeId;
 
   return (
     <main className="min-h-screen px-4 py-10 sm:px-6 lg:px-10">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
-        {/* Theme Toggle */}
+        {/* Theme Toggle & Hidden Platform Link */}
         <BlurFade delay={0.1} inView>
-          <div className="flex justify-end">
+          <div className="flex items-center justify-between">
+            <Link
+              href="/platform"
+              className="rounded-lg p-2 text-muted-foreground/30 transition-colors hover:bg-muted hover:text-muted-foreground"
+              title="ממשק פלטפורמה"
+            >
+              <Code2 className="h-4 w-4" />
+            </Link>
             <AnimatedThemeToggler />
           </div>
         </BlurFade>
@@ -54,19 +57,27 @@ export default async function Home() {
       <div className="grid gap-6 sm:grid-cols-2">
         {/* Employee Card */}
         <Link href="/employee" className="group">
-          <section className="relative h-full overflow-hidden rounded-3xl border-2 bg-card p-6 shadow-md transition-all duration-300 hover:border-emerald-500/50 hover:shadow-lg dark:shadow-secondary/50">
+          <section className={`relative h-full overflow-hidden rounded-3xl border-2 bg-card p-6 shadow-md transition-all duration-300 hover:border-emerald-500/50 hover:shadow-lg dark:shadow-secondary/50 ${isEmployeeLoggedIn ? "border-emerald-500/30" : ""}`}>
             <div
               aria-hidden="true"
               className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-2xl transition-all duration-300 group-hover:bg-emerald-500/20"
             />
 
             <div className="relative z-10">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <Users className="h-6 w-6" />
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <Users className="h-6 w-6" />
+                </div>
+                {isEmployeeLoggedIn && (
+                  <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    מחובר
+                  </div>
+                )}
               </div>
 
               <h2 className="text-xl font-semibold text-foreground">
-                כניסת עובד
+                ממשק עובד
               </h2>
 
               <p className="mt-2 text-sm text-muted-foreground">
@@ -74,7 +85,7 @@ export default async function Home() {
               </p>
 
               <div className="mt-4 flex items-center gap-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                <span>המשך לדיווח</span>
+                <span>{isEmployeeLoggedIn ? "המשך לממשק" : "כניסה לממשק"}</span>
                 <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
               </div>
             </div>

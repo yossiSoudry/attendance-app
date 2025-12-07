@@ -51,7 +51,6 @@ type EmployeeTasksListProps = {
   openTasks: EmployeeTask[];
   completedTasks: EmployeeTask[];
   otherTasks: EmployeeTask[];
-  employeeId: string;
 };
 
 function isOverdue(task: EmployeeTask): boolean {
@@ -59,7 +58,7 @@ function isOverdue(task: EmployeeTask): boolean {
   return new Date(task.dueDate) < new Date();
 }
 
-function TaskCard({ task, employeeId }: { task: EmployeeTask; employeeId: string }) {
+function TaskCard({ task }: { task: EmployeeTask }) {
   const router = useRouter();
   const [isCompleting, setIsCompleting] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
@@ -103,7 +102,6 @@ function TaskCard({ task, employeeId }: { task: EmployeeTask; employeeId: string
       try {
         const uploadResult = await attachDocumentToTask(
           task.id,
-          employeeId,
           result.info.secure_url
         );
         if (!uploadResult.success) {
@@ -232,7 +230,7 @@ function TaskCard({ task, employeeId }: { task: EmployeeTask; employeeId: string
                     options={{
                       maxFiles: 1,
                       resourceType: "auto",
-                      folder: `attendance-app/task-documents/${employeeId}`,
+                      folder: `attendance-app/task-documents/${task.id}`,
                       clientAllowedFormats: ["pdf", "jpg", "jpeg", "png", "doc", "docx"],
                     }}
                     onSuccess={handleUploadSuccess}
@@ -331,7 +329,6 @@ export function EmployeeTasksList({
   openTasks,
   completedTasks,
   otherTasks,
-  employeeId,
 }: EmployeeTasksListProps) {
   const [showCompleted, setShowCompleted] = React.useState(false);
 
@@ -362,7 +359,7 @@ export function EmployeeTasksList({
           </div>
           <div className="grid gap-3">
             {openTasks.map((task) => (
-              <TaskCard key={task.id} task={task} employeeId={employeeId} />
+              <TaskCard key={task.id} task={task} />
             ))}
           </div>
         </div>
@@ -374,7 +371,7 @@ export function EmployeeTasksList({
           <h2 className="text-lg font-semibold">משימות נוספות ({otherTasks.length})</h2>
           <div className="grid gap-3">
             {otherTasks.map((task) => (
-              <TaskCard key={task.id} task={task} employeeId={employeeId} />
+              <TaskCard key={task.id} task={task} />
             ))}
           </div>
         </div>
@@ -399,7 +396,7 @@ export function EmployeeTasksList({
           <CollapsibleContent className="pt-3">
             <div className="grid gap-3">
               {completedTasks.map((task) => (
-                <TaskCard key={task.id} task={task} employeeId={employeeId} />
+                <TaskCard key={task.id} task={task} />
               ))}
             </div>
           </CollapsibleContent>

@@ -5,6 +5,7 @@ import * as React from "react";
 import {
   Building2,
   ChevronsUpDown,
+  Home,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -206,6 +207,12 @@ export function PlatformSidebar({ admin }: PlatformSidebarProps) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/">
+                    <Home className="h-4 w-4" />
+                    דף הבית
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleSignOut}
                   className="text-destructive focus:text-destructive"

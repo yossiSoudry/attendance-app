@@ -271,14 +271,6 @@ export function AdminSidebar({ organization }: AdminSidebarProps) {
       <SidebarFooter className="border-t">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="חזרה לדף הבית">
-              <Link href="/">
-                <Home className="h-4 w-4" />
-                <span>חזרה לדף הבית</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
@@ -333,6 +325,12 @@ export function AdminSidebar({ organization }: AdminSidebarProps) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/">
+                    <Home className="h-4 w-4" />
+                    דף הבית
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleSignOut}
                   className="text-destructive focus:text-destructive"

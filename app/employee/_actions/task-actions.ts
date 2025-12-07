@@ -2,8 +2,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import type { TaskStatus } from "@prisma/client";
+import { getAuthenticatedEmployee, verifyTaskOwnership } from "@/lib/employee-auth";
 
 // ========================================
 // Types
@@ -27,21 +29,23 @@ export type EmployeeTask = {
 // Actions
 // ========================================
 
-export async function getEmployeeTasks(employeeId: string): Promise<EmployeeTask[]> {
-  // Get employee's organizationId
-  const employee = await prisma.employee.findUnique({
-    where: { id: employeeId },
-    select: { organizationId: true },
-  });
+export async function getEmployeeTasks(): Promise<EmployeeTask[]> {
+  // Authenticate employee from session
+  const authResult = await getAuthenticatedEmployee();
 
-  if (!employee) {
-    return [];
+  if (!authResult.authenticated) {
+    if (authResult.reason === "no_cookie" || authResult.reason === "not_found") {
+      redirect("/employee/login");
+    }
+    return []; // Blocked employee
   }
+
+  const { employee } = authResult;
 
   const tasks = await prisma.task.findMany({
     where: {
       organizationId: employee.organizationId,
-      employeeId,
+      employeeId: employee.id,
       isVisible: true,      // Only show visible tasks
       isTemplate: false,    // Don't show recurring templates
     },
@@ -76,15 +80,20 @@ export async function completeTask(
   employeeNote?: string
 ) {
   try {
-    // First check if task requires document
-    const task = await prisma.task.findUnique({
-      where: { id: taskId },
-      select: {
-        requiresDocumentUpload: true,
-        attachedDocumentId: true,
-        organizationId: true,
-      },
-    });
+    // Authenticate employee from session
+    const authResult = await getAuthenticatedEmployee();
+
+    if (!authResult.authenticated) {
+      if (authResult.reason === "no_cookie" || authResult.reason === "not_found") {
+        redirect("/employee/login");
+      }
+      return { success: false, error: "החשבון שלך חסום" };
+    }
+
+    const { employee } = authResult;
+
+    // Verify task ownership - CRITICAL SECURITY CHECK
+    const task = await verifyTaskOwnership(taskId, employee.id, employee.organizationId);
 
     if (!task) {
       return { success: false, error: "משימה לא נמצאה" };
@@ -118,6 +127,25 @@ export async function updateEmployeeNote(
   employeeNote: string
 ) {
   try {
+    // Authenticate employee from session
+    const authResult = await getAuthenticatedEmployee();
+
+    if (!authResult.authenticated) {
+      if (authResult.reason === "no_cookie" || authResult.reason === "not_found") {
+        redirect("/employee/login");
+      }
+      return { success: false, error: "החשבון שלך חסום" };
+    }
+
+    const { employee } = authResult;
+
+    // Verify task ownership - CRITICAL SECURITY CHECK
+    const task = await verifyTaskOwnership(taskId, employee.id, employee.organizationId);
+
+    if (!task) {
+      return { success: false, error: "משימה לא נמצאה" };
+    }
+
     await prisma.task.update({
       where: { id: taskId },
       data: { employeeNote },
@@ -132,21 +160,20 @@ export async function updateEmployeeNote(
   }
 }
 
-export async function getEmployeeOpenTasksCount(employeeId: string): Promise<number> {
-  // Get employee's organizationId
-  const employee = await prisma.employee.findUnique({
-    where: { id: employeeId },
-    select: { organizationId: true },
-  });
+export async function getEmployeeOpenTasksCount(): Promise<number> {
+  // Authenticate employee from session
+  const authResult = await getAuthenticatedEmployee();
 
-  if (!employee) {
+  if (!authResult.authenticated) {
     return 0;
   }
+
+  const { employee } = authResult;
 
   return prisma.task.count({
     where: {
       organizationId: employee.organizationId,
-      employeeId,
+      employeeId: employee.id,
       status: "OPEN",
       isVisible: true,
       isTemplate: false,
@@ -156,25 +183,33 @@ export async function getEmployeeOpenTasksCount(employeeId: string): Promise<num
 
 export async function attachDocumentToTask(
   taskId: string,
-  employeeId: string,
   fileUrl: string
 ) {
   try {
-    // Get employee's organizationId
-    const employee = await prisma.employee.findUnique({
-      where: { id: employeeId },
-      select: { organizationId: true },
-    });
+    // Authenticate employee from session - don't accept employeeId as parameter
+    const authResult = await getAuthenticatedEmployee();
 
-    if (!employee) {
-      return { success: false, error: "עובד לא נמצא" };
+    if (!authResult.authenticated) {
+      if (authResult.reason === "no_cookie" || authResult.reason === "not_found") {
+        redirect("/employee/login");
+      }
+      return { success: false, error: "החשבון שלך חסום" };
+    }
+
+    const { employee } = authResult;
+
+    // Verify task ownership - CRITICAL SECURITY CHECK
+    const task = await verifyTaskOwnership(taskId, employee.id, employee.organizationId);
+
+    if (!task) {
+      return { success: false, error: "משימה לא נמצאה" };
     }
 
     // Create the document
     const document = await prisma.employeeDocument.create({
       data: {
         organizationId: employee.organizationId,
-        employeeId,
+        employeeId: employee.id,
         docType: "TASK_ATTACHMENT",
         fileUrl,
         visibility: "EMPLOYER_ONLY",
@@ -199,12 +234,26 @@ export async function attachDocumentToTask(
 
 export async function removeDocumentFromTask(taskId: string) {
   try {
-    const task = await prisma.task.findUnique({
-      where: { id: taskId },
-      select: { attachedDocumentId: true },
-    });
+    // Authenticate employee from session
+    const authResult = await getAuthenticatedEmployee();
 
-    if (task?.attachedDocumentId) {
+    if (!authResult.authenticated) {
+      if (authResult.reason === "no_cookie" || authResult.reason === "not_found") {
+        redirect("/employee/login");
+      }
+      return { success: false, error: "החשבון שלך חסום" };
+    }
+
+    const { employee } = authResult;
+
+    // Verify task ownership - CRITICAL SECURITY CHECK
+    const task = await verifyTaskOwnership(taskId, employee.id, employee.organizationId);
+
+    if (!task) {
+      return { success: false, error: "משימה לא נמצאה" };
+    }
+
+    if (task.attachedDocumentId) {
       // Remove from task first
       await prisma.task.update({
         where: { id: taskId },

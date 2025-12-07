@@ -23,7 +23,8 @@
       "Bash(if exist .next rmdir /s /q .next)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(npm run test:run:*)"
     ],
     "deny": [],
     "ask": []

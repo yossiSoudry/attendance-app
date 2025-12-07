@@ -133,7 +133,7 @@ export function ShiftHistoryList({ shifts, timezone }: ShiftHistoryListProps) {
   const groupedShifts = groupShiftsByDay(shifts, timezone);
 
   return (
-    <Accordion type="single" collapsible className="flex flex-col gap-3">
+    <Accordion type="single" collapsible className="flex flex-col gap-3 ">
       {groupedShifts.map((day) => (
         <AccordionItem
           key={day.date}

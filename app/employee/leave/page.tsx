@@ -34,7 +34,7 @@ export default async function EmployeeLeavePage() {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       {/* Header */}
-      <section className="rounded-3xl border-2 bg-card p-6 shadow-md dark:shadow-secondary/50">
+      <section className="rounded-3xl border-2 bg-card p-6 shadow-md dark:shadow-secondary/50 mt-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-semibold">בקשות חופשה</h1>
