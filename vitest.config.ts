@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: "node",
-    include: ["**/*.test.{ts,tsx}"],
+    include: ["lib/__tests__/**/*.test.{ts,tsx}"],
     globals: true,
     coverage: {
       reporter: ["text", "json", "html"],
