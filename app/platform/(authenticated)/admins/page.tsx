@@ -16,16 +16,18 @@ export default async function PlatformAdminsPage() {
   const admins = await getPlatformAdmins();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">מנהלי פלטפורמה</h1>
-          <p className="text-muted-foreground">
-            ניהול המנהלים שיכולים לגשת לממשק הפלטפורמה
-          </p>
+    <div className="flex w-full flex-col gap-6">
+      <section className="rounded-3xl border border-border bg-card p-6 shadow-lg">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">מנהלי פלטפורמה</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              ניהול המנהלים שיכולים לגשת לממשק הפלטפורמה
+            </p>
+          </div>
+          <AddPlatformAdminDialog />
         </div>
-        <AddPlatformAdminDialog />
-      </div>
+      </section>
 
       <Card>
         <CardHeader>

@@ -36,6 +36,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 import { logoutPlatformAdmin } from "../_actions/platform-auth-actions";
@@ -103,6 +104,13 @@ function getInitials(name: string | undefined): string {
 export function PlatformSidebar({ admin }: PlatformSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { setOpenMobile, isMobile } = useSidebar();
+
+  const handleNavClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   async function handleSignOut() {
     await logoutPlatformAdmin();
@@ -146,7 +154,7 @@ export function PlatformSidebar({ admin }: PlatformSidebarProps) {
                     }
                     tooltip={item.title}
                   >
-                    <Link href={item.url}>
+                    <Link href={item.url} onClick={handleNavClick}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </Link>
@@ -208,13 +216,16 @@ export function PlatformSidebar({ admin }: PlatformSidebarProps) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/">
+                  <Link href="/" onClick={handleNavClick}>
                     <Home className="h-4 w-4" />
                     דף הבית
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={handleSignOut}
+                  onClick={() => {
+                    handleNavClick();
+                    handleSignOut();
+                  }}
                   className="text-destructive focus:text-destructive"
                 >
                   <LogOut className="h-4 w-4" />

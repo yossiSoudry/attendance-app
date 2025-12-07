@@ -54,6 +54,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 // ========================================
@@ -148,8 +149,15 @@ interface AdminSidebarProps {
 export function AdminSidebar({ organization }: AdminSidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { setOpenMobile, isMobile } = useSidebar();
   const userRole = session?.user?.role as AdminRole | undefined;
   const showTeamManagement = canManageAdmins(userRole);
+
+  const handleNavClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   async function handleSignOut() {
     await signOut({ callbackUrl: "/admin/login" });
@@ -215,7 +223,7 @@ export function AdminSidebar({ organization }: AdminSidebarProps) {
                                 asChild
                                 isActive={pathname === subItem.url}
                               >
-                                <Link href={subItem.url}>
+                                <Link href={subItem.url} onClick={handleNavClick}>
                                   <span>{subItem.title}</span>
                                 </Link>
                               </SidebarMenuSubButton>
@@ -232,7 +240,7 @@ export function AdminSidebar({ organization }: AdminSidebarProps) {
                       isActive={pathname === item.url}
                       tooltip={item.title}
                     >
-                      <Link href={item.url}>
+                      <Link href={item.url} onClick={handleNavClick}>
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
                       </Link>
@@ -256,7 +264,7 @@ export function AdminSidebar({ organization }: AdminSidebarProps) {
                     isActive={pathname === "/admin/team"}
                     tooltip="ניהול צוות"
                   >
-                    <Link href="/admin/team">
+                    <Link href="/admin/team" onClick={handleNavClick}>
                       <UsersRound className="h-4 w-4" />
                       <span>ניהול צוות</span>
                     </Link>
@@ -326,13 +334,16 @@ export function AdminSidebar({ organization }: AdminSidebarProps) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/">
+                  <Link href="/" onClick={handleNavClick}>
                     <Home className="h-4 w-4" />
                     דף הבית
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={handleSignOut}
+                  onClick={() => {
+                    handleNavClick();
+                    handleSignOut();
+                  }}
                   className="text-destructive focus:text-destructive"
                 >
                   <LogOut className="h-4 w-4" />

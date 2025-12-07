@@ -25,9 +25,9 @@ export default async function EmployeePayrollPage() {
 
   return (
     <div className="flex w-full flex-col gap-6">
-      <section className="rounded-2xl border bg-card p-6 shadow-sm">
+      <section className="rounded-3xl border border-border bg-card p-6 shadow-lg">
         <div>
-          <h1 className="text-2xl font-bold">חישוב שכר חודשי</h1>
+          <h1 className="text-2xl font-bold text-foreground">חישוב שכר חודשי</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             פירוט שכר לפי חוק שעות עבודה ומנוחה
           </p>

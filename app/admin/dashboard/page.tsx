@@ -27,10 +27,10 @@ export default async function DashboardPage() {
       {/* Header */}
       <section className="rounded-3xl border border-border bg-card p-6 shadow-lg">
         <div>
-          <h1 className="bg-linear-to-l from-violet-400 via-sky-400 to-violet-300 bg-clip-text text-2xl font-bold text-transparent">
+          <h1 className="text-2xl font-bold text-foreground">
             דשבורד
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             סקירה כללית של העסק
           </p>
         </div>

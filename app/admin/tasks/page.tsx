@@ -10,6 +10,7 @@ import {
   getTasksStats,
 } from "./_actions/task-actions";
 import { TasksDataTable } from "./_components/tasks-data-table";
+import { TaskFormDialog } from "./_components/task-form-dialog";
 
 export default async function TasksPage() {
   const [tasks, employees, stats] = await Promise.all([
@@ -19,14 +20,19 @@ export default async function TasksPage() {
   ]);
 
   return (
-    <div className="container mx-auto space-y-6 py-6">
+    <div className="flex w-full flex-col gap-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">ניהול משימות</h1>
-        <p className="text-sm text-muted-foreground">
-          הקצאת משימות לעובדים ומעקב אחר ביצוען
-        </p>
-      </div>
+      <section className="rounded-3xl border border-border bg-card p-6 shadow-lg">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">ניהול משימות</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              הקצאת משימות לעובדים ומעקב אחר ביצוען
+            </p>
+          </div>
+          <TaskFormDialog mode="create" employees={employees} />
+        </div>
+      </section>
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -76,7 +82,9 @@ export default async function TasksPage() {
       </div>
 
       {/* Tasks Table */}
-      <TasksDataTable data={tasks} employees={employees} />
+      <section className="rounded-3xl border border-border bg-card p-4">
+        <TasksDataTable data={tasks} employees={employees} hideCreateButton />
+      </section>
     </div>
   );
 }

@@ -20,14 +20,14 @@ export default async function AdminLeavePage() {
 
   return (
     <div className="flex w-full flex-col gap-6">
-      <section className="rounded-2xl border bg-card p-6 shadow-sm">
-        <h1 className="text-2xl font-bold">ניהול חופשות</h1>
+      <section className="rounded-3xl border border-border bg-card p-6 shadow-lg">
+        <h1 className="text-2xl font-bold text-foreground">ניהול חופשות</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           אישור ודחייה של בקשות חופשה ומחלה
         </p>
       </section>
 
-      <section className="rounded-2xl border bg-card p-6 shadow-sm">
+      <section className="rounded-3xl border border-border bg-card p-6 shadow-lg">
         <LeaveAdminContent
           initialPending={pendingRequests}
           employees={employees}

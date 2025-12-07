@@ -4,6 +4,7 @@ import {
   WorkTypesDataTable,
   type WorkTypeTableRow,
 } from "./_components/work-types-data-table";
+import { WorkTypeFormDialog } from "./_components/work-type-form-dialog";
 
 export const dynamic = "force-dynamic";
 
@@ -35,12 +36,17 @@ export default async function WorkTypesPage() {
   return (
     <div className="flex w-full flex-col gap-6">
       <section className="rounded-3xl border border-border bg-card p-6 shadow-lg">
-        <h1 className="bg-linear-to-l from-violet-400 via-sky-400 to-violet-300 bg-clip-text text-2xl font-bold text-transparent">
-          ניהול סוגי עבודה
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          הגדר סוגי עבודה שונים עם תעריפי שכר ייחודיים לכל עובד.
-        </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              ניהול סוגי עבודה
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              הגדר סוגי עבודה שונים עם תעריפי שכר ייחודיים לכל עובד.
+            </p>
+          </div>
+          <WorkTypeFormDialog mode="create" />
+        </div>
       </section>
 
       <section className="rounded-3xl border border-border bg-card p-4">
@@ -52,7 +58,7 @@ export default async function WorkTypesPage() {
             </p>
           </div>
         ) : (
-          <WorkTypesDataTable data={rows} />
+          <WorkTypesDataTable data={rows} hideCreateButton />
         )}
       </section>
     </div>

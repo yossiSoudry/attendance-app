@@ -15,21 +15,23 @@ export default async function OrganizationsPage() {
   const organizations = await getOrganizations();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">ארגונים</h1>
-          <p className="text-muted-foreground">
-            ניהול כל הארגונים במערכת
-          </p>
+    <div className="flex w-full flex-col gap-6">
+      <section className="rounded-3xl border border-border bg-card p-6 shadow-lg">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">ארגונים</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              ניהול כל הארגונים במערכת
+            </p>
+          </div>
+          <Button asChild>
+            <Link href="/platform/organizations/new">
+              <Building2 className="ml-2 h-4 w-4" />
+              ארגון חדש
+            </Link>
+          </Button>
         </div>
-        <Button asChild>
-          <Link href="/platform/organizations/new">
-            <Building2 className="ml-2 h-4 w-4" />
-            ארגון חדש
-          </Link>
-        </Button>
-      </div>
+      </section>
 
       <Card>
         <CardHeader>

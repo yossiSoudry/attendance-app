@@ -29,12 +29,12 @@ export default async function CalendarPage() {
   return (
     <div className="flex w-full flex-col gap-6">
       <section className="rounded-3xl border border-border bg-card p-6 shadow-lg">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="bg-linear-to-l from-violet-400 via-sky-400 to-violet-300 bg-clip-text text-2xl font-bold text-transparent">
+            <h1 className="text-2xl font-bold text-foreground">
               לוח שנה וחגים
             </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               נהל חגים, צומות ואירועים מיוחדים שמשפיעים על חישובי שכר ושעות עבודה.
             </p>
           </div>

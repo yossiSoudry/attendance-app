@@ -43,11 +43,13 @@ type WorkTypeForAssignment = {
 type EmployeesDataTableProps = {
   data: EmployeeTableRow[];
   workTypes: WorkTypeForAssignment[];
+  hideCreateButton?: boolean;
 };
 
 export function EmployeesDataTable({
   data,
   workTypes,
+  hideCreateButton = false,
 }: EmployeesDataTableProps) {
   const columns = React.useMemo<ColumnDef<EmployeeTableRow>[]>(
     () => [
@@ -236,7 +238,7 @@ export function EmployeesDataTable({
   return (
     <DataTable table={table}>
       <DataTableToolbar table={table}>
-        <EmployeeFormDialog mode="create" />
+        {!hideCreateButton && <EmployeeFormDialog mode="create" />}
         <DataTableSortList table={table} />
       </DataTableToolbar>
     </DataTable>

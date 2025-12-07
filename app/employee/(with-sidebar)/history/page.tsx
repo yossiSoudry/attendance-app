@@ -74,10 +74,10 @@ export default async function EmployeeHistoryPage({ searchParams }: PageProps) {
 
   return (
     <div className="flex w-full flex-col gap-6 pb-2">
-      <section className="rounded-2xl border bg-card p-6 shadow-sm">
+      <section className="rounded-3xl border border-border bg-card p-6 shadow-lg">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">היסטוריית משמרות</h1>
+            <h1 className="text-2xl font-bold text-foreground">היסטוריית משמרות</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {shifts.length} משמרות בתקופה זו
             </p>

@@ -4,6 +4,8 @@ import {
   ShiftsDataTable,
   type ShiftTableRow,
 } from "./_components/shifts-data-table";
+import { ShiftFormDialog } from "./_components/shift-form-dialog";
+import { ExportShiftsButton } from "./_components/export-shifts-button";
 
 export const dynamic = "force-dynamic";
 
@@ -51,22 +53,38 @@ export default async function ShiftsPage() {
     orderBy: { name: "asc" },
   });
 
+  const employeeOptions = employees.map((e: typeof employees[number]) => ({ label: e.fullName, value: e.id }));
+  const workTypeOptions = workTypes.map((wt: typeof workTypes[number]) => ({ label: wt.name, value: wt.id }));
+
   return (
     <div className="flex w-full flex-col gap-6">
       <section className="rounded-3xl border border-border bg-card p-6 shadow-lg">
-        <h1 className="bg-linear-to-l from-violet-400 via-sky-400 to-violet-300 bg-clip-text text-2xl font-bold text-transparent">
-          ניהול משמרות
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          צפייה בכל המשמרות, סינון לפי עובד, תאריך וסטטוס.
-        </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              ניהול משמרות
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              צפייה בכל המשמרות, סינון לפי עובד, תאריך וסטטוס.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <ShiftFormDialog
+              mode="create"
+              employees={employeeOptions}
+              workTypes={workTypeOptions}
+            />
+            <ExportShiftsButton />
+          </div>
+        </div>
       </section>
 
       <section className="rounded-3xl border border-border bg-card p-4">
         <ShiftsDataTable
           data={rows}
-          employees={employees.map((e: typeof employees[number]) => ({ label: e.fullName, value: e.id }))}
-          workTypes={workTypes.map((wt: typeof workTypes[number]) => ({ label: wt.name, value: wt.id }))}
+          employees={employeeOptions}
+          workTypes={workTypeOptions}
+          hideCreateButton
         />
       </section>
     </div>

@@ -49,9 +49,10 @@ function formatRateDisplay(rateType: WorkTypeRateType, rateValue: number): strin
 
 type WorkTypesDataTableProps = {
   data: WorkTypeTableRow[];
+  hideCreateButton?: boolean;
 };
 
-export function WorkTypesDataTable({ data }: WorkTypesDataTableProps) {
+export function WorkTypesDataTable({ data, hideCreateButton = false }: WorkTypesDataTableProps) {
   const columns = React.useMemo<ColumnDef<WorkTypeTableRow>[]>(
     () => [
       {
@@ -238,7 +239,7 @@ export function WorkTypesDataTable({ data }: WorkTypesDataTableProps) {
   return (
     <DataTable table={table}>
       <DataTableToolbar table={table}>
-        <WorkTypeFormDialog mode="create" />
+        {!hideCreateButton && <WorkTypeFormDialog mode="create" />}
         <DataTableSortList table={table} />
       </DataTableToolbar>
     </DataTable>

@@ -61,6 +61,7 @@ type Employee = {
 type TasksDataTableProps = {
   data: TaskWithEmployee[];
   employees: Employee[];
+  hideCreateButton?: boolean;
 };
 
 function isOverdue(task: TaskWithEmployee): boolean {
@@ -68,7 +69,7 @@ function isOverdue(task: TaskWithEmployee): boolean {
   return new Date(task.dueDate) < new Date();
 }
 
-export function TasksDataTable({ data, employees }: TasksDataTableProps) {
+export function TasksDataTable({ data, employees, hideCreateButton = false }: TasksDataTableProps) {
   const [selectedTask, setSelectedTask] = React.useState<TaskWithEmployee | null>(
     null
   );
@@ -333,7 +334,7 @@ export function TasksDataTable({ data, employees }: TasksDataTableProps) {
     <>
       <DataTable table={table}>
         <DataTableToolbar table={table}>
-          <TaskFormDialog mode="create" employees={employees} />
+          {!hideCreateButton && <TaskFormDialog mode="create" employees={employees} />}
           <DataTableSortList table={table} />
         </DataTableToolbar>
       </DataTable>

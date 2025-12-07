@@ -34,6 +34,7 @@ type ShiftsDataTableProps = {
   data: ShiftTableRow[];
   employees: { label: string; value: string }[];
   workTypes?: { label: string; value: string }[];
+  hideCreateButton?: boolean;
 };
 
 function formatDuration(startIso: string, endIso: string | null): string {
@@ -83,6 +84,7 @@ export function ShiftsDataTable({
   data,
   employees,
   workTypes = [],
+  hideCreateButton = false,
 }: ShiftsDataTableProps) {
   const columns = React.useMemo<ColumnDef<ShiftTableRow>[]>(
     () => [
@@ -279,12 +281,16 @@ export function ShiftsDataTable({
   return (
     <DataTable table={table}>
       <DataTableToolbar table={table}>
-        <ShiftFormDialog
-          mode="create"
-          employees={employees}
-          workTypes={workTypes}
-        />
-        <ExportShiftsButton />
+        {!hideCreateButton && (
+          <>
+            <ShiftFormDialog
+              mode="create"
+              employees={employees}
+              workTypes={workTypes}
+            />
+            <ExportShiftsButton />
+          </>
+        )}
         <DataTableSortList table={table} />
       </DataTableToolbar>
     </DataTable>
