@@ -131,12 +131,9 @@ export function ShiftsDataTable({
         cell: ({ row }) => {
           const { startTime, endTime } = row.original;
           return (
-            <div
-              className="flex items-center gap-1 tabular-nums text-sm"
-              dir="ltr"
-            >
+            <div className="flex items-center gap-1 tabular-nums text-sm">
               <Clock className="h-3 w-3 opacity-60" />
-              <span>
+              <span dir="ltr">
                 {formatTime(startTime)} -{" "}
                 {endTime ? formatTime(endTime) : "..."}
               </span>

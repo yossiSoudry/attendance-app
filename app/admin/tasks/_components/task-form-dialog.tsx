@@ -119,14 +119,20 @@ export function TaskFormDialog({
 
   async function onSubmit(values: TaskFormValues) {
     try {
+      let result;
       if (mode === "edit" && task) {
-        await updateTask(task.id, values);
+        result = await updateTask(task.id, values);
       } else {
-        await createTask(values);
+        result = await createTask(values);
       }
 
-      onOpenChange?.(false);
+      if (!result.success) {
+        console.error("Failed to save task:", result.error);
+        return;
+      }
+
       form.reset();
+      onOpenChange?.(false);
       router.refresh();
     } catch (error) {
       console.error("Failed to save task:", error);

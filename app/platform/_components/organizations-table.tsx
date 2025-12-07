@@ -61,7 +61,7 @@ export function OrganizationsTable({ organizations }: OrganizationsTableProps) {
           <TableHead>עובדים</TableHead>
           <TableHead>מנהלים</TableHead>
           <TableHead>תאריך יצירה</TableHead>
-          <TableHead className="text-left">פעולות</TableHead>
+          <TableHead>פעולות</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

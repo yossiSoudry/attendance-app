@@ -333,6 +333,7 @@ export function TasksDataTable({ data, employees }: TasksDataTableProps) {
     <>
       <DataTable table={table}>
         <DataTableToolbar table={table}>
+          <TaskFormDialog mode="create" employees={employees} />
           <DataTableSortList table={table} />
         </DataTableToolbar>
       </DataTable>
