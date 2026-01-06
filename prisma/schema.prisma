@@ -92,6 +92,7 @@ model Organization {
   devices         Device[]
   auditLogs       AuditLog[]
   leaveRequests   LeaveRequest[]
+  casualWorkerEntries CasualWorkerEntry[]
 
   @@index([email])
   @@index([status])
@@ -182,8 +183,9 @@ enum AdminStatus {
 
 // סוג העסקה
 enum EmploymentType {
-  HOURLY    // שעתי
-  MONTHLY   // חודשי
+  HOURLY        // שעתי
+  MONTHLY       // חודשי
+  HR_CONTRACTOR // מנהל כוח אדם / קבלן
 }
 
 // סוג תשלום נסיעות
@@ -313,6 +315,9 @@ model Employee {
   documents        EmployeeDocument[]
   devices          Device[]
   leaveRequests    LeaveRequest[]
+
+  // HR Contractor relations - רשומות עובדים מזדמנים
+  casualWorkerEntries CasualWorkerEntry[] @relation("ContractorEntries")
 
   @@unique([organizationId, employeeNumber]) // מספר עובד ייחודי בתוך ארגון
   @@unique([organizationId, nationalId])     // ת.ז. ייחודית בתוך ארגון
@@ -639,4 +644,27 @@ model LeaveRequest {
   @@index([organizationId])
   @@index([employeeId, status])
   @@index([startDate, endDate])
+}
+
+// רשומת עובד מזדמן (עבור מנהל כוח אדם / קבלן)
+model CasualWorkerEntry {
+  id              String   @id @default(uuid()) @db.Uuid
+  organizationId  String   @db.Uuid
+  contractorId    String   @db.Uuid  // מנהל כוח האדם (Employee עם סוג HR_CONTRACTOR)
+
+  workerName      String   // שם העובד המזדמן
+  workDate        DateTime @db.Date
+  startTime       DateTime
+  endTime         DateTime
+  durationMinutes Int      // משך בדקות (מחושב בעת יצירה)
+  notes           String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contractor      Employee     @relation("ContractorEntries", fields: [contractorId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([contractorId, workDate])
 }

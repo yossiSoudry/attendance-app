@@ -66,7 +66,7 @@ export type AdminPayrollSummary = {
     month: string;
   };
   employeeInfo?: {
-    employmentType: "HOURLY" | "MONTHLY";
+    employmentType: "HOURLY" | "MONTHLY" | "HR_CONTRACTOR";
     monthlyRate: string | null;
   };
 };

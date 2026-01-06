@@ -21,6 +21,7 @@ export default async function EmployeeWithSidebarLayout({
       where: { id: employeeId },
       select: {
         fullName: true,
+        employmentType: true,
         organization: {
           select: {
             id: true,
@@ -37,6 +38,11 @@ export default async function EmployeeWithSidebarLayout({
 
   if (!employee) {
     redirect("/employee/login");
+  }
+
+  // HR Contractors should use their dedicated interface
+  if (employee.employmentType === "HR_CONTRACTOR") {
+    redirect("/contractor");
   }
 
   return (

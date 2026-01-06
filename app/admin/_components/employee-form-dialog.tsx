@@ -53,7 +53,7 @@ type EmployeeFormDialogProps = {
     fullName: string;
     nationalId: string;
     status: "ACTIVE" | "BLOCKED";
-    employmentType: "HOURLY" | "MONTHLY";
+    employmentType: "HOURLY" | "MONTHLY" | "HR_CONTRACTOR";
     baseHourlyRate: number | null;
     monthlyRate: number | null;
     workDaysPerWeek: number;
@@ -263,6 +263,7 @@ export function EmployeeFormDialog({
                       <SelectContent>
                         <SelectItem value="HOURLY">שעתי</SelectItem>
                         <SelectItem value="MONTHLY">חודשי</SelectItem>
+                        <SelectItem value="HR_CONTRACTOR">מנהל כוח אדם (קבלן)</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -276,7 +277,9 @@ export function EmployeeFormDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      {employmentType === "HOURLY"
+                      {employmentType === "HR_CONTRACTOR"
+                        ? "תעריף לשעה (₪)"
+                        : employmentType === "HOURLY"
                         ? "שכר לשעה (₪)"
                         : "שכר שעתי בסיסי (₪)"}
                     </FormLabel>
@@ -297,6 +300,11 @@ export function EmployeeFormDialog({
                     {employmentType === "MONTHLY" && (
                       <FormDescription>
                         משמש לחישוב שעות נוספות
+                      </FormDescription>
+                    )}
+                    {employmentType === "HR_CONTRACTOR" && (
+                      <FormDescription>
+                        סכום קבוע לשעה עבור כל שעות העובדים המזדמנים
                       </FormDescription>
                     )}
                     <FormMessage />
@@ -335,104 +343,109 @@ export function EmployeeFormDialog({
                 />
               )}
 
-              <FormField
-                control={form.control}
-                name="workDaysPerWeek"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ימי עבודה בשבוע</FormLabel>
-                    <Select
-                      onValueChange={(val) => field.onChange(parseInt(val))}
-                      defaultValue={field.value.toString()}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="בחר ימי עבודה" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {[1, 2, 3, 4, 5, 6, 7].map((days) => (
-                          <SelectItem key={days} value={days.toString()}>
-                            {days} ימים
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <Separator />
-
-            {/* Travel Allowance */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-medium">דמי נסיעות</h4>
-
-              <FormField
-                control={form.control}
-                name="travelAllowanceType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>סוג תשלום נסיעות</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="בחר סוג תשלום" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="NONE">ללא</SelectItem>
-                        <SelectItem value="DAILY">יומי</SelectItem>
-                        <SelectItem value="MONTHLY">חודשי קבוע</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {travelAllowanceType !== "NONE" && (
+              {employmentType !== "HR_CONTRACTOR" && (
                 <FormField
                   control={form.control}
-                  name="travelAllowanceAmount"
+                  name="workDaysPerWeek"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>
-                        {travelAllowanceType === "DAILY"
-                          ? "סכום ליום (₪)"
-                          : "סכום חודשי (₪)"}
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder={
-                            travelAllowanceType === "DAILY" ? "25.00" : "500.00"
-                          }
-                          dir="ltr"
-                          className="text-left"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value
-                                ? parseFloat(e.target.value)
-                                : null
-                            )
-                          }
-                        />
-                      </FormControl>
+                      <FormLabel>ימי עבודה בשבוע</FormLabel>
+                      <Select
+                        onValueChange={(val) => field.onChange(parseInt(val))}
+                        defaultValue={field.value.toString()}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="בחר ימי עבודה" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {[1, 2, 3, 4, 5, 6, 7].map((days) => (
+                            <SelectItem key={days} value={days.toString()}>
+                              {days} ימים
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               )}
             </div>
+
+            {/* Travel Allowance - only for regular employees */}
+            {employmentType !== "HR_CONTRACTOR" && (
+              <>
+                <Separator />
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium">דמי נסיעות</h4>
+
+                  <FormField
+                    control={form.control}
+                    name="travelAllowanceType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>סוג תשלום נסיעות</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="בחר סוג תשלום" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="NONE">ללא</SelectItem>
+                            <SelectItem value="DAILY">יומי</SelectItem>
+                            <SelectItem value="MONTHLY">חודשי קבוע</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {travelAllowanceType !== "NONE" && (
+                    <FormField
+                      control={form.control}
+                      name="travelAllowanceAmount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            {travelAllowanceType === "DAILY"
+                              ? "סכום ליום (₪)"
+                              : "סכום חודשי (₪)"}
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder={
+                                travelAllowanceType === "DAILY" ? "25.00" : "500.00"
+                              }
+                              dir="ltr"
+                              className="text-left"
+                              value={field.value ?? ""}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value
+                                    ? parseFloat(e.target.value)
+                                    : null
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
+              </>
+            )}
 
             <DialogFooter className="gap-2 pt-4">
               <Button

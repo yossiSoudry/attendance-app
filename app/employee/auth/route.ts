@@ -34,5 +34,10 @@ export async function POST(request: NextRequest) {
     maxAge: 60 * 60 * 24 * 7,
   });
 
+  // Redirect based on employment type
+  if (employee.employmentType === "HR_CONTRACTOR") {
+    redirect("/contractor");
+  }
+
   redirect("/employee");
 }

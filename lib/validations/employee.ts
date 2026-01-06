@@ -14,7 +14,7 @@ export const employeeFormSchema = z.object({
   status: z.enum(["ACTIVE", "BLOCKED"]),
 
   // Employment type
-  employmentType: z.enum(["HOURLY", "MONTHLY"]),
+  employmentType: z.enum(["HOURLY", "MONTHLY", "HR_CONTRACTOR"]),
   baseHourlyRate: z
     .number()
     .min(0, { message: "שכר לא יכול להיות שלילי" })
