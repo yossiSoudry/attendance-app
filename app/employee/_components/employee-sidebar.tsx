@@ -11,6 +11,8 @@ import {
   History,
   Home,
   LogOut,
+  Share,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -84,6 +86,8 @@ export function EmployeeSidebar({ employeeName, openTasksCount, organization }: 
   const { setOpenMobile, isMobile } = useSidebar();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [showIOSInstructions, setShowIOSInstructions] = useState(false);
 
   // Listen for install prompt
   useEffect(() => {
@@ -96,6 +100,10 @@ export function EmployeeSidebar({ employeeName, openTasksCount, organization }: 
     if (window.matchMedia("(display-mode: standalone)").matches) {
       setIsInstalled(true);
     }
+
+    // Check if iOS
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    setIsIOS(isIOSDevice);
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -210,7 +218,7 @@ export function EmployeeSidebar({ employeeName, openTasksCount, organization }: 
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Install App Button - only show if not installed and prompt is available */}
+        {/* Install App Button - Android/Desktop */}
         {!isInstalled && deferredPrompt && (
           <SidebarGroup>
             <SidebarGroupContent>
@@ -228,6 +236,59 @@ export function EmployeeSidebar({ employeeName, openTasksCount, organization }: 
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+        )}
+
+        {/* Install App Button - iOS */}
+        {!isInstalled && isIOS && !deferredPrompt && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    tooltip="התקן כאפליקציה"
+                    onClick={() => setShowIOSInstructions(true)}
+                    className="text-emerald-600 dark:text-emerald-400"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>התקן כאפליקציה</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* iOS Instructions Modal */}
+        {showIOSInstructions && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="bg-background rounded-lg p-6 max-w-sm w-full shadow-lg">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold text-lg">התקנת האפליקציה</h3>
+                <button
+                  onClick={() => setShowIOSInstructions(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="space-y-3 text-sm">
+                <p>להתקנת האפליקציה באייפון:</p>
+                <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+                  <li className="flex items-center gap-2">
+                    לחץ על כפתור השיתוף <Share className="h-4 w-4 inline" />
+                  </li>
+                  <li>גלול ובחר &quot;Add to Home Screen&quot;</li>
+                  <li>לחץ &quot;Add&quot; בפינה הימנית העליונה</li>
+                </ol>
+              </div>
+              <button
+                onClick={() => setShowIOSInstructions(false)}
+                className="mt-4 w-full bg-primary text-primary-foreground rounded-md py-2 text-sm font-medium"
+              >
+                הבנתי
+              </button>
+            </div>
+          </div>
         )}
       </SidebarContent>
 

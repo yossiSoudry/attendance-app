@@ -25,7 +25,10 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(npm run test:run:*)",
-      "Bash(dir \"C:\\Users\\USER\\Desktop\\projects\\attendance-app\" /s /b)"
+      "Bash(dir \"C:\\Users\\USER\\Desktop\\projects\\attendance-app\" /s /b)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(git branch:*)",
+      "Bash(git worktree:*)"
     ],
     "deny": [],
     "ask": []
