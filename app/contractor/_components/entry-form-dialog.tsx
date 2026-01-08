@@ -4,7 +4,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon, Loader2, Plus, Pencil } from "lucide-react";
+import { AlertTriangle, CalendarIcon, Loader2, Plus, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 
@@ -47,7 +47,10 @@ import { cn } from "@/lib/utils";
 import {
   casualWorkerEntryFormSchema,
   type CasualWorkerEntryFormValues,
+  calculateDurationMinutes,
+  formatMinutesToDisplay,
 } from "@/lib/validations/casual-worker-entry";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   createCasualWorkerEntry,
   updateCasualWorkerEntry,
@@ -88,6 +91,22 @@ export function EntryFormDialog({
       notes: entry?.notes ?? "",
     },
   });
+
+  // Watch time fields to calculate duration
+  const startTime = form.watch("startTime");
+  const endTime = form.watch("endTime");
+
+  // Calculate shift duration for warning
+  const shiftDuration = React.useMemo(() => {
+    if (!startTime || !endTime) return 0;
+    try {
+      return calculateDurationMinutes(startTime, endTime);
+    } catch {
+      return 0;
+    }
+  }, [startTime, endTime]);
+
+  const isLongShift = shiftDuration > 12 * 60; // More than 12 hours
 
   // Reset form when dialog opens
   React.useEffect(() => {
@@ -300,6 +319,16 @@ export function EntryFormDialog({
                 )}
               />
             </div>
+
+            {/* Long shift warning */}
+            {isLongShift && (
+              <Alert variant="destructive" className="bg-amber-50 border-amber-200 text-amber-800">
+                <AlertTriangle className="h-4 w-4 !text-amber-600" />
+                <AlertDescription>
+                  משמרת ארוכה: {formatMinutesToDisplay(shiftDuration)} שעות. האם זה נכון?
+                </AlertDescription>
+              </Alert>
+            )}
 
             {/* Notes */}
             <FormField

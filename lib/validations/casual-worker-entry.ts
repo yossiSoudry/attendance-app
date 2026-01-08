@@ -18,15 +18,24 @@ export const casualWorkerEntryFormSchema = z
   })
   .refine(
     (data) => {
-      // Validate end time is after start time
+      // Validate that shift duration is reasonable (max 16 hours)
+      // Allows overnight shifts (e.g., 17:00 to 01:15)
       const [startHour, startMin] = data.startTime.split(":").map(Number);
       const [endHour, endMin] = data.endTime.split(":").map(Number);
       const startMinutes = startHour * 60 + startMin;
       const endMinutes = endHour * 60 + endMin;
-      return endMinutes > startMinutes;
+
+      // If end time is "before" start time, it's an overnight shift
+      // Calculate duration accounting for crossing midnight
+      const duration = endMinutes > startMinutes
+        ? endMinutes - startMinutes
+        : (24 * 60 - startMinutes) + endMinutes; // Overnight shift
+
+      // Duration must be positive and not exceed 16 hours
+      return duration > 0 && duration <= 16 * 60;
     },
     {
-      message: "שעת הסיום חייבת להיות אחרי שעת ההתחלה",
+      message: "משמרת לא יכולה להיות ארוכה מ-16 שעות",
       path: ["endTime"],
     }
   );
@@ -35,12 +44,18 @@ export type CasualWorkerEntryFormValues = z.infer<typeof casualWorkerEntryFormSc
 
 /**
  * Calculate duration in minutes from start and end time strings
+ * Supports overnight shifts (e.g., 17:00 to 01:15)
  */
 export function calculateDurationMinutes(startTime: string, endTime: string): number {
   const [startHour, startMin] = startTime.split(":").map(Number);
   const [endHour, endMin] = endTime.split(":").map(Number);
   const startMinutes = startHour * 60 + startMin;
   const endMinutes = endHour * 60 + endMin;
+
+  // If end time is "before" start time, it's an overnight shift
+  if (endMinutes <= startMinutes) {
+    return (24 * 60 - startMinutes) + endMinutes;
+  }
   return endMinutes - startMinutes;
 }
 

@@ -53,6 +53,13 @@ export async function createCasualWorkerEntry(
   const endDateTime = new Date(workDate);
   endDateTime.setHours(endHour, endMin, 0, 0);
 
+  // If end time is before start time, it's an overnight shift - add one day to end time
+  const startMinutes = startHour * 60 + startMin;
+  const endMinutes = endHour * 60 + endMin;
+  if (endMinutes <= startMinutes) {
+    endDateTime.setDate(endDateTime.getDate() + 1);
+  }
+
   await prisma.casualWorkerEntry.create({
     data: {
       organizationId: auth.contractor.organizationId,
@@ -114,6 +121,13 @@ export async function updateCasualWorkerEntry(
 
   const endDateTime = new Date(workDate);
   endDateTime.setHours(endHour, endMin, 0, 0);
+
+  // If end time is before start time, it's an overnight shift - add one day to end time
+  const startMinutesCalc = startHour * 60 + startMin;
+  const endMinutesCalc = endHour * 60 + endMin;
+  if (endMinutesCalc <= startMinutesCalc) {
+    endDateTime.setDate(endDateTime.getDate() + 1);
+  }
 
   await prisma.casualWorkerEntry.update({
     where: { id: entryId },

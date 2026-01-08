@@ -2,7 +2,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { Trash2, Pencil, FileX } from "lucide-react";
+import { Trash2, Pencil, FileX, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { formatMinutesToDisplay } from "@/lib/validations/casual-worker-entry";
 import {
@@ -90,6 +96,7 @@ export function EntryList({ entries, workerNameSuggestions }: EntryListProps) {
               {entries.map((entry) => {
                 const workDate = new Date(entry.workDate);
                 const dayOfWeek = hebrewDays[workDate.getDay()];
+                const isLongShift = entry.durationMinutes > 12 * 60;
 
                 return (
                   <TableRow key={entry.id}>
@@ -107,7 +114,21 @@ export function EntryList({ entries, workerNameSuggestions }: EntryListProps) {
                       {formatTime(entry.endTime)}
                     </TableCell>
                     <TableCell dir="ltr" className="text-right font-mono text-sm">
-                      {formatMinutesToDisplay(entry.durationMinutes)}
+                      <span className="flex items-center justify-end gap-1.5">
+                        {formatMinutesToDisplay(entry.durationMinutes)}
+                        {isLongShift && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>משמרת ארוכה (מעל 12 שעות)</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-1">
