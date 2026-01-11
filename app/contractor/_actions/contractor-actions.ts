@@ -43,21 +43,21 @@ export async function createCasualWorkerEntry(
   // Calculate duration
   const durationMinutes = calculateDurationMinutes(startTime, endTime);
 
-  // Create datetime from date and time
+  // Create datetime from date and time (using UTC to avoid timezone issues)
   const [startHour, startMin] = startTime.split(":").map(Number);
   const [endHour, endMin] = endTime.split(":").map(Number);
 
   const startDateTime = new Date(workDate);
-  startDateTime.setHours(startHour, startMin, 0, 0);
+  startDateTime.setUTCHours(startHour, startMin, 0, 0);
 
   const endDateTime = new Date(workDate);
-  endDateTime.setHours(endHour, endMin, 0, 0);
+  endDateTime.setUTCHours(endHour, endMin, 0, 0);
 
   // If end time is before start time, it's an overnight shift - add one day to end time
   const startMinutes = startHour * 60 + startMin;
   const endMinutes = endHour * 60 + endMin;
   if (endMinutes <= startMinutes) {
-    endDateTime.setDate(endDateTime.getDate() + 1);
+    endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
   }
 
   await prisma.casualWorkerEntry.create({
@@ -117,16 +117,16 @@ export async function updateCasualWorkerEntry(
   const [endHour, endMin] = endTime.split(":").map(Number);
 
   const startDateTime = new Date(workDate);
-  startDateTime.setHours(startHour, startMin, 0, 0);
+  startDateTime.setUTCHours(startHour, startMin, 0, 0);
 
   const endDateTime = new Date(workDate);
-  endDateTime.setHours(endHour, endMin, 0, 0);
+  endDateTime.setUTCHours(endHour, endMin, 0, 0);
 
   // If end time is before start time, it's an overnight shift - add one day to end time
   const startMinutesCalc = startHour * 60 + startMin;
   const endMinutesCalc = endHour * 60 + endMin;
   if (endMinutesCalc <= startMinutesCalc) {
-    endDateTime.setDate(endDateTime.getDate() + 1);
+    endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
   }
 
   await prisma.casualWorkerEntry.update({
