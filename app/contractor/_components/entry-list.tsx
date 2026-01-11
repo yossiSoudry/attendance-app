@@ -1,7 +1,6 @@
 // app/contractor/_components/entry-list.tsx
 "use client";
 
-import { format } from "date-fns";
 import { Trash2, Pencil, FileX, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 
@@ -99,13 +98,15 @@ export function EntryList({ entries, workerNameSuggestions }: EntryListProps) {
             <TableBody>
               {entries.map((entry) => {
                 const workDate = new Date(entry.workDate);
-                const dayOfWeek = hebrewDays[workDate.getDay()];
+                // Use UTC to avoid timezone shifting the date
+                const dayOfWeek = hebrewDays[workDate.getUTCDay()];
                 const isLongShift = entry.durationMinutes > 12 * 60;
 
                 return (
                   <TableRow key={entry.id}>
                     <TableCell className="font-medium">
-                      {format(workDate, "dd/MM/yyyy")}
+                      {/* Format date using UTC values to avoid timezone shift */}
+                      {`${workDate.getUTCDate().toString().padStart(2, "0")}/${(workDate.getUTCMonth() + 1).toString().padStart(2, "0")}/${workDate.getUTCFullYear()}`}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {dayOfWeek}
@@ -162,7 +163,7 @@ export function EntryList({ entries, workerNameSuggestions }: EntryListProps) {
                               <AlertDialogTitle>מחיקת רשומה</AlertDialogTitle>
                               <AlertDialogDescription>
                                 האם למחוק את הרשומה של {entry.workerName} מתאריך{" "}
-                                {format(workDate, "dd/MM/yyyy")}?
+                                {`${workDate.getUTCDate().toString().padStart(2, "0")}/${(workDate.getUTCMonth() + 1).toString().padStart(2, "0")}/${workDate.getUTCFullYear()}`}?
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
