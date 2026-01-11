@@ -43,14 +43,22 @@ export async function createCasualWorkerEntry(
   // Calculate duration
   const durationMinutes = calculateDurationMinutes(startTime, endTime);
 
+  // Normalize workDate to UTC midnight (preserve the date the user selected)
+  const normalizedWorkDate = new Date(Date.UTC(
+    workDate.getFullYear(),
+    workDate.getMonth(),
+    workDate.getDate(),
+    0, 0, 0, 0
+  ));
+
   // Create datetime from date and time (using UTC to avoid timezone issues)
   const [startHour, startMin] = startTime.split(":").map(Number);
   const [endHour, endMin] = endTime.split(":").map(Number);
 
-  const startDateTime = new Date(workDate);
+  const startDateTime = new Date(normalizedWorkDate);
   startDateTime.setUTCHours(startHour, startMin, 0, 0);
 
-  const endDateTime = new Date(workDate);
+  const endDateTime = new Date(normalizedWorkDate);
   endDateTime.setUTCHours(endHour, endMin, 0, 0);
 
   // If end time is before start time, it's an overnight shift - add one day to end time
@@ -65,7 +73,7 @@ export async function createCasualWorkerEntry(
       organizationId: auth.contractor.organizationId,
       contractorId: auth.contractor.id,
       workerName,
-      workDate,
+      workDate: normalizedWorkDate,
       startTime: startDateTime,
       endTime: endDateTime,
       durationMinutes,
@@ -113,13 +121,21 @@ export async function updateCasualWorkerEntry(
   const { workerName, workDate, startTime, endTime, notes } = validation.data;
   const durationMinutes = calculateDurationMinutes(startTime, endTime);
 
+  // Normalize workDate to UTC midnight (preserve the date the user selected)
+  const normalizedWorkDate = new Date(Date.UTC(
+    workDate.getFullYear(),
+    workDate.getMonth(),
+    workDate.getDate(),
+    0, 0, 0, 0
+  ));
+
   const [startHour, startMin] = startTime.split(":").map(Number);
   const [endHour, endMin] = endTime.split(":").map(Number);
 
-  const startDateTime = new Date(workDate);
+  const startDateTime = new Date(normalizedWorkDate);
   startDateTime.setUTCHours(startHour, startMin, 0, 0);
 
-  const endDateTime = new Date(workDate);
+  const endDateTime = new Date(normalizedWorkDate);
   endDateTime.setUTCHours(endHour, endMin, 0, 0);
 
   // If end time is before start time, it's an overnight shift - add one day to end time
@@ -133,7 +149,7 @@ export async function updateCasualWorkerEntry(
     where: { id: entryId },
     data: {
       workerName,
-      workDate,
+      workDate: normalizedWorkDate,
       startTime: startDateTime,
       endTime: endDateTime,
       durationMinutes,

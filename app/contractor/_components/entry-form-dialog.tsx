@@ -86,8 +86,8 @@ export function EntryFormDialog({
     defaultValues: {
       workerName: entry?.workerName ?? "",
       workDate: entry?.workDate ? new Date(entry.workDate) : new Date(),
-      startTime: entry?.startTime ? formatTimeFromDate(new Date(entry.startTime)) : "08:00",
-      endTime: entry?.endTime ? formatTimeFromDate(new Date(entry.endTime)) : "16:00",
+      startTime: entry?.startTime ? formatTimeFromDate(new Date(entry.startTime)) : "",
+      endTime: entry?.endTime ? formatTimeFromDate(new Date(entry.endTime)) : "",
       notes: entry?.notes ?? "",
     },
   });
@@ -114,8 +114,8 @@ export function EntryFormDialog({
       form.reset({
         workerName: entry?.workerName ?? "",
         workDate: entry?.workDate ? new Date(entry.workDate) : new Date(),
-        startTime: entry?.startTime ? formatTimeFromDate(new Date(entry.startTime)) : "08:00",
-        endTime: entry?.endTime ? formatTimeFromDate(new Date(entry.endTime)) : "16:00",
+        startTime: entry?.startTime ? formatTimeFromDate(new Date(entry.startTime)) : "",
+        endTime: entry?.endTime ? formatTimeFromDate(new Date(entry.endTime)) : "",
         notes: entry?.notes ?? "",
       });
     }
