@@ -46,7 +46,11 @@ type EntryListProps = {
 };
 
 function formatTime(date: Date): string {
-  return format(new Date(date), "HH:mm");
+  // Use UTC hours/minutes to avoid timezone conversion
+  const d = new Date(date);
+  const hours = d.getUTCHours().toString().padStart(2, "0");
+  const minutes = d.getUTCMinutes().toString().padStart(2, "0");
+  return `${hours}:${minutes}`;
 }
 
 const hebrewDays = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];

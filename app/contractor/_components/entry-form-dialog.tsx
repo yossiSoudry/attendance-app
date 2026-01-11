@@ -74,10 +74,10 @@ export function EntryFormDialog({
   const [isPending, setIsPending] = React.useState(false);
   const [workerNameOpen, setWorkerNameOpen] = React.useState(false);
 
-  // Format time from Date to HH:MM string
+  // Format time from Date to HH:MM string (using UTC to avoid timezone issues)
   const formatTimeFromDate = (date: Date): string => {
-    const hours = date.getHours().toString().padStart(2, "0");
-    const minutes = date.getMinutes().toString().padStart(2, "0");
+    const hours = date.getUTCHours().toString().padStart(2, "0");
+    const minutes = date.getUTCMinutes().toString().padStart(2, "0");
     return `${hours}:${minutes}`;
   };
 
