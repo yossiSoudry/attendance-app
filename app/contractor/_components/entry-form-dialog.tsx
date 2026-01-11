@@ -124,10 +124,23 @@ export function EntryFormDialog({
   async function onSubmit(values: CasualWorkerEntryFormValues) {
     setIsPending(true);
 
+    // Normalize workDate to UTC midnight before sending to server
+    // This preserves the date the user selected regardless of timezone
+    const workDate = values.workDate;
+    const normalizedValues = {
+      ...values,
+      workDate: new Date(Date.UTC(
+        workDate.getFullYear(),
+        workDate.getMonth(),
+        workDate.getDate(),
+        12, 0, 0, 0  // Use noon UTC to avoid any edge cases
+      )),
+    };
+
     const result =
       mode === "create"
-        ? await createCasualWorkerEntry(values)
-        : await updateCasualWorkerEntry(entry!.id, values);
+        ? await createCasualWorkerEntry(normalizedValues)
+        : await updateCasualWorkerEntry(entry!.id, normalizedValues);
 
     setIsPending(false);
 

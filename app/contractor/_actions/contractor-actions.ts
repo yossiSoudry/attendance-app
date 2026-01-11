@@ -44,10 +44,11 @@ export async function createCasualWorkerEntry(
   const durationMinutes = calculateDurationMinutes(startTime, endTime);
 
   // Normalize workDate to UTC midnight (preserve the date the user selected)
+  // Use getUTC* methods because the date object may have been shifted during serialization
   const normalizedWorkDate = new Date(Date.UTC(
-    workDate.getFullYear(),
-    workDate.getMonth(),
-    workDate.getDate(),
+    workDate.getUTCFullYear(),
+    workDate.getUTCMonth(),
+    workDate.getUTCDate(),
     0, 0, 0, 0
   ));
 
@@ -122,10 +123,11 @@ export async function updateCasualWorkerEntry(
   const durationMinutes = calculateDurationMinutes(startTime, endTime);
 
   // Normalize workDate to UTC midnight (preserve the date the user selected)
+  // Use getUTC* methods because the date object may have been shifted during serialization
   const normalizedWorkDate = new Date(Date.UTC(
-    workDate.getFullYear(),
-    workDate.getMonth(),
-    workDate.getDate(),
+    workDate.getUTCFullYear(),
+    workDate.getUTCMonth(),
+    workDate.getUTCDate(),
     0, 0, 0, 0
   ));
 
