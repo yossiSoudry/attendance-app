@@ -1,8 +1,16 @@
 // app/contractor/_components/monthly-summary.tsx
 "use client";
 
-import { Clock, FileText, Wallet, Calculator } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Clock, FileText, Wallet, Calculator, Users } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type { ContractorPayrollSummary } from "@/lib/calculations/contractor-payroll";
 
 type MonthlySummaryProps = {
@@ -87,6 +95,40 @@ export function MonthlySummary({
         {summary.totalHoursFormatted} שעות × {hourlyRateDisplay} ={" "}
         <span className="font-medium text-foreground">{summary.formattedPay}</span>
       </p>
+
+      {/* Per-Worker Breakdown */}
+      {summary.workerSummaries.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-medium flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              שעות לפי עובד
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-right">שם העובד</TableHead>
+                  <TableHead className="text-center">רשומות</TableHead>
+                  <TableHead className="text-left">סה״כ שעות</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {summary.workerSummaries.map((worker) => (
+                  <TableRow key={worker.workerName}>
+                    <TableCell className="font-medium">{worker.workerName}</TableCell>
+                    <TableCell className="text-center">{worker.totalEntries}</TableCell>
+                    <TableCell className="text-left" dir="ltr">
+                      {worker.totalHoursFormatted}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
